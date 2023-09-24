@@ -5,7 +5,11 @@ services:
     container_name: elasticsearch
     restart: unless-stopped
     environment:
-      - discovery.type=single-node
+      - discovery.type=single-node  
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=riwspractica
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
     ports:
       - 9200:9200
       - 9300:9300
@@ -25,3 +29,5 @@ volumes:
 
 networks:
   esnet:
+
+# reference -> https://discuss.elastic.co/t/set-password-and-user-with-docker-compose/225075

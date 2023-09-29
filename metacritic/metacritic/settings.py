@@ -99,11 +99,11 @@ ITEM_PIPELINES = {
     'scrapyelasticsearch.scrapyelasticsearch.ElasticSearchPipeline': 500
 }
 
-ELASTICSEARCH_SERVERS = ['http://localhost:9200/']
-ELASTICSEARCH_INDEX = 'scrapy'
+ELASTICSEARCH_SERVERS = ['http://elastic:riwspractica@localhost:9200']
+ELASTICSEARCH_INDEX = 'metacritic'
 #ELASTICSEARCH_INDEX_DATE_FORMAT = '%Y-%m'
 ELASTICSEARCH_TYPE = 'items'
-ELASTICSEARCH_UNIQ_KEY = 'url'  # Custom unique key
+ELASTICSEARCH_UNIQ_KEY = 'title'  # Custom unique key
 
 # can also accept a list of fields if need a composite key
 #ELASTICSEARCH_UNIQ_KEY = ['url', 'id']

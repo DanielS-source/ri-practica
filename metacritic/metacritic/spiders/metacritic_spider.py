@@ -82,7 +82,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             if release_date:
                 try:
                     date_obj = datetime.strptime(release_date.strip(), "%b %d, %Y")
-                    formatted_date = date_obj.strftime("%d/%m/%Y")
+                    formatted_date = date_obj.strftime("%Y-%m-%d")
                     item['release_date'] = formatted_date
                 except ValueError:
                     item['release_date'] = None
@@ -110,7 +110,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
                     release_date = movieDetails[1].get().strip()
                     try:
                         date_obj = datetime.strptime(release_date.strip(), "%b %d, %Y")
-                        formatted_date = date_obj.strftime("%d/%m/%Y")
+                        formatted_date = date_obj.strftime("%Y-%m-%d")
                         item['release_date'] = formatted_date
                     except ValueError:
                         item['release_date'] = None
@@ -136,10 +136,9 @@ class MetacriticSpiderSpider(scrapy.Spider):
             if release_date:
                 try:
                     date_obj = datetime.strptime(release_date.strip(), "%b %d, %Y")
-                    formatted_date = date_obj.strftime("%d/%m/%Y")
+                    formatted_date = date_obj.strftime("%Y-%m-%d")
                     item['release_date'] = formatted_date
                 except ValueError:
                     item['release_date'] = None
-
-        print(item)
+                    
         yield item

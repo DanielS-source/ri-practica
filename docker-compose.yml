@@ -10,6 +10,7 @@ services:
       - ELASTIC_PASSWORD=riwspractica
       - http.cors.enabled=true
       - http.cors.allow-origin="*"
+      - xpack.security.enabled=false  # Disable security
     ports:
       - 9200:9200
       - 9300:9300

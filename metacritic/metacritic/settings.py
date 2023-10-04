@@ -96,14 +96,11 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 ITEM_PIPELINES = {
-    'scrapyelasticsearch.scrapyelasticsearch.ElasticSearchPipeline': 500
+    'metacritic.pipelines.ElasticsearchPipeline': 100,
 }
 
-ELASTICSEARCH_SERVERS = ['http://elastic:riwspractica@localhost:9200']
-ELASTICSEARCH_INDEX = 'metacritic'
-#ELASTICSEARCH_INDEX_DATE_FORMAT = '%Y-%m'
-ELASTICSEARCH_TYPE = 'items'
-ELASTICSEARCH_UNIQ_KEY = 'title'  # Custom unique key
-
-# can also accept a list of fields if need a composite key
-#ELASTICSEARCH_UNIQ_KEY = ['url', 'id']
+ELASTICSEARCH = {
+    'host': 'http://elastic:riwspractica@localhost:9200',
+    'index_name': 'metacritic',
+    'delete_index': True  # Set to True if you want to delete the existing index
+}

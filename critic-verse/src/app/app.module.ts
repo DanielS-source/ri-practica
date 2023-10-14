@@ -14,13 +14,27 @@ import { DetailsComponent } from './details/details.component';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import {MatListModule} from '@angular/material/list';
 import {MatToolbarModule} from '@angular/material/toolbar';
+import { RouterModule, Routes } from '@angular/router';
+import { SearchComponent } from './search/search.component';
+import {MatSliderModule} from '@angular/material/slider';
+
+const routes: Routes = [
+  {
+    path: "search",
+    component: SearchComponent,
+    data: { title: "Search" }
+  },
+  { path: "", redirectTo: "/search", pathMatch: "full" }
+];
 
 @NgModule({
   declarations: [
     AppComponent,
+    SearchComponent,
     DetailsComponent
   ],
   imports: [
+    RouterModule.forRoot(routes),
     BrowserModule,
     BrowserAnimationsModule,
     MatSelectModule,
@@ -34,8 +48,10 @@ import {MatToolbarModule} from '@angular/material/toolbar';
     MatInputModule,
     MatSidenavModule,
     MatListModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatSliderModule
   ],
+  exports: [DetailsComponent],
   providers: [],
   bootstrap: [AppComponent]
 })

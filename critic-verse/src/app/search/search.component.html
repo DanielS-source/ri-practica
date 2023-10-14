@@ -1,0 +1,33 @@
+<div>
+    <!-- my-form.component.html -->
+    <form [formGroup]="form" (ngSubmit)="submitForm()">
+        <mat-form-field class="example-full-width">
+            <input matInput placeholder="Search" formControlName="searchQuery">
+        </mat-form-field>
+
+        <mat-form-field class="example-full-width">
+            <mat-label>Select an option</mat-label>
+            <mat-select formControlName="selectedOption">
+                <!-- <mat-option *ngFor="let option of options" [value]="option.value">{{ option.label }}</mat-option> -->
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field class="example-full-width">
+            <input matInput [matDatepicker]="picker" placeholder="Choose a date" formControlName="selectedDate">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-slider min="200" max="500">
+            <input value="300" matSliderStartThumb>
+            <input value="400" matSliderEndThumb>
+        </mat-slider>
+          
+
+        <button type="submit" (click)="submitForm()">Submit</button>
+
+        <mat-drawer #drawer mode="side">
+            <app-details (closeDrawerEvent)="closeDrawer()"></app-details>
+        </mat-drawer>
+    </form>
+</div>

@@ -1,21 +1,27 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SearchService {
+  private httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json'
+    })
+  };
 
   constructor(private _httpClient: HttpClient) { }
 
   getAllItems(): Observable<any[]> {
-    return this._httpClient.get(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`).pipe(
-      map((response: any) => response)
-    );
+    return this._httpClient.get<any[]>(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, this.httpOptions)
+      .pipe(
+        map((response: any) => response)
+      );
   }
-  
+
   getMaxUserVotes(): Observable<number> {
     const query = {
       size: 0,
@@ -27,11 +33,15 @@ export class SearchService {
         }
       }
     };
-    return this._httpClient.post(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, JSON.stringify(query)).pipe(
+    return this._httpClient.post<any>(
+      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
+      JSON.stringify(query),
+      this.httpOptions
+    ).pipe(
       map((response: any) => response.aggregations.max_user_reviews.value)
     );
   }
-  
+
   getMaxCriticVotes(): Observable<number> {
     const query = {
       size: 0,
@@ -43,7 +53,11 @@ export class SearchService {
         }
       }
     };
-    return this._httpClient.post(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, JSON.stringify(query)).pipe(
+    return this._httpClient.post<any>(
+      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
+      JSON.stringify(query),
+      this.httpOptions
+    ).pipe(
       map((response: any) => response.aggregations.max_user_reviews.value)
     );
   }
@@ -59,11 +73,12 @@ export class SearchService {
         }
       }
     };
-    return this._httpClient.post(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, JSON.stringify(query))
-    .pipe(
+    return this._httpClient.post<any>(
+      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
+      JSON.stringify(query),
+      this.httpOptions
+    ).pipe(
       map((response: any) => response.aggregations.unique_genres.buckets.map((bucket: { key: string; }) => bucket.key))
     );
   }
-
-
 }

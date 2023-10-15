@@ -17,11 +17,22 @@ import {MatToolbarModule} from '@angular/material/toolbar';
 import { RouterModule, Routes } from '@angular/router';
 import { SearchComponent } from './search/search.component';
 import {MatSliderModule} from '@angular/material/slider';
+import { InitialPageResolver } from './search/resolvers/initial-page.resolver';
+import { GenreListResolver } from './search/resolvers/genre-list.resolver';
+import { MaxCriticVotesResolver } from './search/resolvers/max-critic-votes.resolver';
+import { MaxUserVotesResolver } from './search/resolvers/max-user-votes.resolver';
+import { HttpClientModule } from '@angular/common/http';
 
 const routes: Routes = [
   {
     path: "search",
     component: SearchComponent,
+    resolve: {
+      items: InitialPageResolver,
+      genres: GenreListResolver,
+      maxCriticVotes: MaxCriticVotesResolver,
+      maxUserVotes: MaxUserVotesResolver,
+    },
     data: { title: "Search" }
   },
   { path: "", redirectTo: "/search", pathMatch: "full" }
@@ -49,7 +60,8 @@ const routes: Routes = [
     MatSidenavModule,
     MatListModule,
     MatToolbarModule,
-    MatSliderModule
+    MatSliderModule,
+    HttpClientModule
   ],
   exports: [DetailsComponent],
   providers: [],

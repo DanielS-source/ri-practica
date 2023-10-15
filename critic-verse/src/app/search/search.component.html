@@ -5,10 +5,22 @@
             <input matInput placeholder="Search" formControlName="searchQuery">
         </mat-form-field>
 
+        <mat-form-field>
+            <mat-label>Genres</mat-label>
+            <mat-select [formControlName]="'selectedGenres'" multiple>
+                <mat-select-trigger>
+                  {{ form.get('selectedGenres')?.value?.[0] || '' }}
+                  <span *ngIf="(form.get('selectedGenres')?.value?.length || 0) > 1" class="example-additional-selection">
+                    (+{{ (form.get('selectedGenres')?.value?.length || 0) - 1 }} {{ form.get('selectedGenres')?.value?.length === 2 ? 'other' : 'others' }})
+                  </span>
+                </mat-select-trigger>
+                <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
+              </mat-select>              
+        </mat-form-field>
+
         <mat-form-field class="example-full-width">
             <mat-label>Select an option</mat-label>
             <mat-select formControlName="selectedOption">
-                <!-- <mat-option *ngFor="let option of options" [value]="option.value">{{ option.label }}</mat-option> -->
             </mat-select>
         </mat-form-field>
 
@@ -22,7 +34,7 @@
             <input value="300" matSliderStartThumb>
             <input value="400" matSliderEndThumb>
         </mat-slider>
-          
+
 
         <button type="submit" (click)="submitForm()">Submit</button>
 

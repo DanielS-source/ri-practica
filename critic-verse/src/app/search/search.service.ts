@@ -18,7 +18,7 @@ export class SearchService {
   getAllItems(): Observable<any[]> {
     return this._httpClient.get<any[]>(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, this.httpOptions)
       .pipe(
-        map((response: any) => response)
+        map((response: any) => response.hits.hits.map((hit: { _source: any; }) => hit._source))
       );
   }
 

@@ -22,6 +22,7 @@ import { GenreListResolver } from './search/resolvers/genre-list.resolver';
 import { MaxCriticVotesResolver } from './search/resolvers/max-critic-votes.resolver';
 import { MaxUserVotesResolver } from './search/resolvers/max-user-votes.resolver';
 import { HttpClientModule } from '@angular/common/http';
+import { ListComponent } from './list/list.component';
 
 const routes: Routes = [
   {
@@ -42,7 +43,8 @@ const routes: Routes = [
   declarations: [
     AppComponent,
     SearchComponent,
-    DetailsComponent
+    DetailsComponent,
+    ListComponent
   ],
   imports: [
     RouterModule.forRoot(routes),
@@ -63,7 +65,10 @@ const routes: Routes = [
     MatSliderModule,
     HttpClientModule
   ],
-  exports: [DetailsComponent],
+  exports: [
+    DetailsComponent, 
+    ListComponent
+  ],
   providers: [],
   bootstrap: [AppComponent]
 })

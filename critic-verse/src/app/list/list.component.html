@@ -1,0 +1,25 @@
+<mat-drawer-container hasBackdrop="false">
+    <mat-drawer #drawer position="end" mode="over">
+        <app-details [item]="selectedItem" (closeDrawerEvent)="closeDrawer()"></app-details>
+    </mat-drawer>
+    <mat-drawer-content>
+        <div>
+            <!-- Item -->
+            <div *ngFor="let item of items"
+                (click)="setItem(item)"
+                class="flex flex-col mb-2 items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <!-- Image -->
+                <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg" 
+                src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.imdb.com%2Ftitle%2Ftt0903747%2F&psig=AOvVaw1Mq4Vt_vnajk3apqdxUymE&ust=1697812879151000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCNCArf6rgoIDFQAAAAAdAAAAABAE" alt="">
+                
+                <!-- Item data -->
+                <div class="flex flex-col justify-between p-4 leading-normal w-4/5">
+                    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ item.title }}</h5>
+                    <p class="mb-3 font-normal text-gray-700 dark:text-gray-400 overflow-hidden truncate">{{ item.summary }}</p>
+                </div>
+        
+            </div>
+        </div>
+      <button mat-raised-button (click)="drawer.toggle()">Toggle</button>
+    </mat-drawer-content>
+</mat-drawer-container>

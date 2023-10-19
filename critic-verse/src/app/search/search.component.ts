@@ -13,7 +13,7 @@ export class SearchComponent implements OnInit, OnDestroy  {
   maxUserVotes: number = 0;
   maxCriticVotes: number = 0;
   genres: string[] = [];
-  items: any;
+  items: any[] = [];
 
   private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -24,10 +24,14 @@ export class SearchComponent implements OnInit, OnDestroy  {
     private _route: ActivatedRoute
   ) {
     this.form = this._fb.group({
-      searchQuery: [''],
-      selectedOption: [''],
+      searchQuery: [undefined],
       selectedGenres: new FormControl([]),
-      selectedDate: ['']
+      startDate: [undefined],
+      endDate: [undefined],
+      userMin: [undefined],
+      userMax: [undefined],
+      criticMin: [undefined],
+      criticMax: [undefined]
     });
   }
 
@@ -37,6 +41,16 @@ export class SearchComponent implements OnInit, OnDestroy  {
       this.maxCriticVotes = resolve.maxCriticVotes;
       this.genres = resolve.genres;
       this.items = resolve.items;
+      this.updateForm()
+      console.log(resolve)
+    })
+  }
+  updateForm() {
+    this.form.patchValue({
+      userMin: [0],
+      userMax: [this.maxUserVotes],
+      criticMin: [0],
+      criticMax: [this.maxCriticVotes]
     })
   }
 
@@ -45,18 +59,8 @@ export class SearchComponent implements OnInit, OnDestroy  {
       this._unsubscribeAll.complete();
   }
 
-
   submitForm() {
     const formData = this.form.value;
     console.log('Form Data:', formData);
-    this.openDrawer();
-  }
-
-  openDrawer() {
-    this.drawer.open();
-  }
-
-  closeDrawer() {
-    this.drawer.close();
   }
 }

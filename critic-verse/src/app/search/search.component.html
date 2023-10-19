@@ -1,45 +1,59 @@
 <div>
-    <!-- my-form.component.html -->
-    <form [formGroup]="form" (ngSubmit)="submitForm()">
-        <mat-form-field class="example-full-width">
-            <input matInput placeholder="Search" formControlName="searchQuery">
-        </mat-form-field>
-
-        <mat-form-field>
-            <mat-label>Genres</mat-label>
-            <mat-select [formControlName]="'selectedGenres'" multiple>
-                <mat-select-trigger>
-                  {{ form.get('selectedGenres')?.value?.[0] || '' }}
-                  <span *ngIf="(form.get('selectedGenres')?.value?.length || 0) > 1" class="example-additional-selection">
-                    (+{{ (form.get('selectedGenres')?.value?.length || 0) - 1 }} {{ form.get('selectedGenres')?.value?.length === 2 ? 'other' : 'others' }})
-                  </span>
-                </mat-select-trigger>
-                <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
-              </mat-select>              
-        </mat-form-field>
-
-        <mat-form-field class="example-full-width">
-            <mat-label>Select an option</mat-label>
-            <mat-select formControlName="selectedOption">
-            </mat-select>
-        </mat-form-field>
-
-        <mat-form-field class="example-full-width">
-            <input matInput [matDatepicker]="picker" placeholder="Choose a date" formControlName="selectedDate">
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
-
-        <mat-slider min="200" max="500">
-            <input value="300" matSliderStartThumb>
-            <input value="400" matSliderEndThumb>
-        </mat-slider>
-
-
-        <button type="submit" (click)="submitForm()">Submit</button>
-
-        <mat-drawer #drawer mode="side">
-            <app-details (closeDrawerEvent)="closeDrawer()"></app-details>
-        </mat-drawer>
-    </form>
+    <div class="min-h-screen flex">
+        <!-- Search section -->
+        <div class="w-1/5 p-4 flex-col">
+            <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex-col">
+                <mat-form-field class="example-full-width">
+                    <input matInput placeholder="Search" formControlName="searchQuery">
+                </mat-form-field>
+        
+                <mat-form-field>
+                    <mat-label>Genres</mat-label>
+                    <mat-select [formControlName]="'selectedGenres'" multiple>
+                        <mat-select-trigger>
+                          {{ form.get('selectedGenres')?.value?.[0] || '' }}
+                          <span *ngIf="(form.get('selectedGenres')?.value?.length || 0) > 1" class="example-additional-selection">
+                            (+{{ (form.get('selectedGenres')?.value?.length || 0) - 1 }} {{ form.get('selectedGenres')?.value?.length === 2 ? 'other' : 'others' }})
+                          </span>
+                        </mat-select-trigger>
+                        <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
+                      </mat-select>              
+                </mat-form-field>
+        
+                <mat-form-field>
+                    <input matInput [matDatepicker]="startDate" placeholder="Start date" formControlName="startDate">
+                    <mat-datepicker-toggle matSuffix [for]="startDate"></mat-datepicker-toggle>
+                    <mat-datepicker #startDate></mat-datepicker>
+                </mat-form-field>
+        
+                <mat-form-field>
+                    <input matInput [matDatepicker]="endDate" placeholder="End date" formControlName="endDate">
+                    <mat-datepicker-toggle matSuffix [for]="endDate"></mat-datepicker-toggle>
+                    <mat-datepicker #endDate></mat-datepicker>
+                </mat-form-field>
+        
+                <div class="flex flex-col">
+                    <label>User votes</label>
+                    <mat-slider min="0" [max]="maxUserVotes" discrete>
+                        <input value="10" matSliderStartThumb matInput formControlName="userMin">
+                        <input value="50" matSliderEndThumb matInput formControlName="userMax">
+                    </mat-slider>
+                </div>
+        
+                <div class="flex flex-col">
+                    <label>Critic votes</label>
+                    <mat-slider min="0" [max]="maxCriticVotes" discrete>
+                        <input value="10" matSliderStartThumb matInput formControlName="criticMin">
+                        <input value="50" matSliderEndThumb matInput formControlName="criticMax">
+                    </mat-slider>
+                </div>
+        
+                <button (click)="submitForm()">Submit</button>
+            </form>
+        </div>
+        <!-- Results section -->
+        <div class="w-4/5 p-4">
+            <app-list [items]="items"></app-list>
+        </div>
+    </div>
 </div>

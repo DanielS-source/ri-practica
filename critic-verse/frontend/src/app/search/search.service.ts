@@ -16,69 +16,37 @@ export class SearchService {
   constructor(private _httpClient: HttpClient) { }
 
   getAllItems(): Observable<any[]> {
-    return this._httpClient.get<any[]>(`${environment.api}/${environment.index}/_search?size=${environment.pageSize}`, this.httpOptions)
+    return this._httpClient.get<any[]>(`${environment.api}/search?size=${environment.pageSize}`, this.httpOptions)
       .pipe(
-        map((response: any) => response.hits.hits.map((hit: { _source: any; }) => hit._source))
+        map((response: any) => response.hits.map((hit: { _source: any; }) => hit._source))
+        // map((response: any) => response.hits.hits.map((hit: { _source: any; }) => hit._source))
       );
   }
 
   getMaxUserVotes(): Observable<number> {
-    const query = {
-      size: 0,
-      aggs: {
-        max_user_reviews: {
-          max: {
-            field: 'user_reviews'
-          }
-        }
-      }
-    };
-    return this._httpClient.post<any>(
-      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
-      JSON.stringify(query),
+    return this._httpClient.get<any>(
+      `${environment.api}/user_score?max=true`,
       this.httpOptions
     ).pipe(
-      map((response: any) => response.aggregations.max_user_reviews.value)
+      map((response: any) => response)
     );
   }
 
   getMaxCriticVotes(): Observable<number> {
-    const query = {
-      size: 0,
-      aggs: {
-        max_user_reviews: {
-          max: {
-            field: 'critic_reviews'
-          }
-        }
-      }
-    };
-    return this._httpClient.post<any>(
-      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
-      JSON.stringify(query),
+    return this._httpClient.get<any>(
+      `${environment.api}/metascore?max=true`,
       this.httpOptions
     ).pipe(
-      map((response: any) => response.aggregations.max_user_reviews.value)
+      map((response: any) => response)
     );
   }
 
   getGenreList(): Observable<string[]> {
-    const query = {
-      size: 0,
-      aggs: {
-        unique_genres: {
-          terms: {
-            field: 'genre'
-          }
-        }
-      }
-    };
-    return this._httpClient.post<any>(
-      `${environment.api}/${environment.index}/_search?size=${environment.pageSize}`,
-      JSON.stringify(query),
+    return this._httpClient.get<any>(
+      `${environment.api}/genres`,
       this.httpOptions
     ).pipe(
-      map((response: any) => response.aggregations.unique_genres.buckets.map((bucket: { key: string; }) => bucket.key))
+      map((response: any) => response)
     );
   }
 }

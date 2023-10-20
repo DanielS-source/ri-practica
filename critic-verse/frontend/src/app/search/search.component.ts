@@ -31,7 +31,11 @@ export class SearchComponent implements OnInit, OnDestroy  {
       userMin: [undefined],
       userMax: [undefined],
       criticMin: [undefined],
-      criticMax: [undefined]
+      criticMax: [undefined],
+      userScoreMin: [undefined],
+      userScoreMax: [undefined],
+      criticScoreMin: [undefined],
+      criticScoreMax: [undefined]
     });
   }
 
@@ -50,7 +54,11 @@ export class SearchComponent implements OnInit, OnDestroy  {
       userMin: [0],
       userMax: [this.maxUserVotes],
       criticMin: [0],
-      criticMax: [this.maxCriticVotes]
+      criticMax: [this.maxCriticVotes],
+      userScoreMin: [0],
+      userScoreMax: [10],
+      criticScoreMin: [0],
+      criticScoreMax: [100]
     })
   }
 

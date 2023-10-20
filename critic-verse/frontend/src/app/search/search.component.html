@@ -3,11 +3,11 @@
         <!-- Search section -->
         <div class="w-1/5 p-4 flex-col">
             <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex-col">
-                <mat-form-field class="example-full-width">
+                <mat-form-field class="w-full">
                     <input matInput placeholder="Search" formControlName="searchQuery">
                 </mat-form-field>
         
-                <mat-form-field>
+                <mat-form-field class="w-full">
                     <mat-label>Genres</mat-label>
                     <mat-select [formControlName]="'selectedGenres'" multiple>
                         <mat-select-trigger>
@@ -20,31 +20,47 @@
                       </mat-select>              
                 </mat-form-field>
         
-                <mat-form-field>
+                <mat-form-field class="w-full">
                     <input matInput [matDatepicker]="startDate" placeholder="Start date" formControlName="startDate">
                     <mat-datepicker-toggle matSuffix [for]="startDate"></mat-datepicker-toggle>
                     <mat-datepicker #startDate></mat-datepicker>
                 </mat-form-field>
         
-                <mat-form-field>
+                <mat-form-field class="w-full">
                     <input matInput [matDatepicker]="endDate" placeholder="End date" formControlName="endDate">
                     <mat-datepicker-toggle matSuffix [for]="endDate"></mat-datepicker-toggle>
                     <mat-datepicker #endDate></mat-datepicker>
                 </mat-form-field>
         
-                <div class="flex flex-col">
-                    <label>User votes</label>
-                    <mat-slider min="0" [max]="maxUserVotes" discrete>
-                        <input value="10" matSliderStartThumb matInput formControlName="userMin">
-                        <input value="50" matSliderEndThumb matInput formControlName="userMax">
+                <div class="flex flex-col w-full" >
+                    <label>User score</label>
+                    <mat-slider min="0" [max]="10" discrete>
+                        <input matSliderStartThumb matInput formControlName="userScoreMin">
+                        <input matSliderEndThumb matInput formControlName="userScoreMax">
                     </mat-slider>
                 </div>
         
-                <div class="flex flex-col">
+                <div class="flex flex-col w-full">
+                    <label>User votes</label>
+                    <mat-slider min="0" [max]="maxUserVotes" discrete>
+                        <input matSliderStartThumb matInput formControlName="userMin">
+                        <input matSliderEndThumb matInput formControlName="userMax">
+                    </mat-slider>
+                </div>
+        
+                <div class="flex flex-col w-full">
+                    <label>Critic score</label>
+                    <mat-slider min="0" [max]="100" discrete>
+                        <input matSliderStartThumb matInput formControlName="criticScoreMin">
+                        <input matSliderEndThumb matInput formControlName="criticScoreMax">
+                    </mat-slider>
+                </div>
+        
+                <div class="flex flex-col w-full">
                     <label>Critic votes</label>
                     <mat-slider min="0" [max]="maxCriticVotes" discrete>
-                        <input value="10" matSliderStartThumb matInput formControlName="criticMin">
-                        <input value="50" matSliderEndThumb matInput formControlName="criticMax">
+                        <input matSliderStartThumb matInput formControlName="criticMin">
+                        <input matSliderEndThumb matInput formControlName="criticMax">
                     </mat-slider>
                 </div>
         

@@ -12,7 +12,7 @@ class ElasticsearchPipeline:
         self.elastic_settings = elastic_settings
         self.index_name = elastic_settings['index_name']
         self.es = Elasticsearch([elastic_settings['host']])
-        if elastic_settings['delete_index']:
+        if self.es.indices.exists(index=self.index_name) and elastic_settings['delete_index']:
             self.es.indices.delete(index=self.index_name)
         self.create_index()
 
@@ -34,7 +34,19 @@ class ElasticsearchPipeline:
                     "title": {"type": "text"},
                     "url": {"type": "keyword"},
                     "user_reviews": {"type": "integer"},
-                    "user_score": {"type": "float"}
+                    "user_score": {"type": "float"},
+                    "images": {"type": "text"},
+                    "video": {"type": "text"},
+                    "video_type": {"type": "text"},
+                    "sentiment": {"type": "text"},
+                    "must_play": {"type": "text"},
+                    "cast_crew": {"type": "text"},
+                    "countries": {"type": "keyword"},
+                    "companies": {"type": "text"},
+                    "platforms": {"type": "keyword"},
+                    "rating": {"type": "keyword"},
+                    "seasons": {"type": "integer"},
+                    "official_site": {"type": "keyword"}
                 }
             }
             self.es.indices.create(index=self.index_name, body={"mappings": mapping})

@@ -38,3 +38,11 @@ typing_extensions==4.8.0
 urllib3==1.26.16
 w3lib==2.1.2
 zope.interface==6.0
+
+
+beautifulsoup4==4.12.2
+jsbeautifier==1.14.9
+# backend
+fastapi == 0.103.2
+uvicorn == 0.23.2
+python-dotenv == 1.0.0

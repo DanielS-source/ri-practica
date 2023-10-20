@@ -28,7 +28,6 @@ class ElasticsearchPipeline:
                     "critic_reviews": {"type": "integer"},
                     "genre": {"type": "keyword"},
                     "metascore": {"type": "integer"},
-                    "producer": {"type": "keyword"},
                     "release_date": {"type": "date", "format": "yyyy-MM-dd"},
                     "summary": {"type": "text"},
                     "title": {"type": "text"},
@@ -40,12 +39,11 @@ class ElasticsearchPipeline:
                     "video_type": {"type": "text"},
                     "sentiment": {"type": "text"},
                     "must_play": {"type": "text"},
-                    "cast_crew": {"type": "text"},
+                    "crew": {"type": "text"},
                     "countries": {"type": "keyword"},
                     "companies": {"type": "text"},
                     "platforms": {"type": "keyword"},
-                    "rating": {"type": "keyword"},
-                    "seasons": {"type": "integer"},
+                    "rating": {"type": "text"},
                     "official_site": {"type": "keyword"}
                 }
             }

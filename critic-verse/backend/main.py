@@ -63,9 +63,13 @@ def multisearch(
     country: str = Query(None, description="Countries (Use commas for multiples countries)", ),
     metascore_min: int = Query(None, description="Metascore min", ),
     metascore_max: int = Query(None, description="Metascore max", ),
+    critic_reviews_min: int = Query(None, description="Metascore reviews min", ),
+    critic_reviews_max: int = Query(None, description="Metascore reviews max", ),
     metascore_asc: bool = Query(None, description="Metascore asc (True) / desc (False)", ),
     user_score_min: int = Query(None, description="User score min", ),
     user_score_max: int = Query(None, description="User score max", ),
+    user_reviews_min: int = Query(None, description="User reviews min", ),
+    user_reviews_max: int = Query(None, description="User reviews max", ),
     user_score_asc: bool = Query(None, description="User score asc (True) / desc (False)", ),
     start_date: datetime.date = Query(None, description="Start date", ),
     end_date: datetime.date = Query(None, description="End date", ),
@@ -117,6 +121,18 @@ def multisearch(
             }}})
         else:
             query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(metascore_min) } } })
+
+    if(critic_reviews_min != None):
+        if("bool" not in query["query"]):
+            query["query"]["bool"] = {"must": []}
+        if(critic_reviews_max != None and int(critic_reviews_max) >= int(critic_reviews_min)):
+            query["query"]["bool"]["must"].append({"range": { "critic_reviews": {
+                "gte": int(critic_reviews_min),
+                "lte": int(critic_reviews_max)
+            }}})
+        else:
+            query["query"]["bool"]["must"].append({"range": { "critic_reviews": { "gte": int(critic_reviews_min) } } })
+
     if(metascore_asc != None):
         sorts.append({"metascore", "asc" if metascore_asc else "desc"})
     if(user_score_min != None):
@@ -129,9 +145,21 @@ def multisearch(
             }}})
         else:
             query["query"]["bool"]["must"].append({"range": { "user_score": { "gte": int(user_score_min) } } })
+
+    if(user_reviews_min != None):
+        if("bool" not in query["query"]):
+            query["query"]["bool"] = {"must": []}
+        if(user_reviews_max!= None and int(user_reviews_max) >= int(user_reviews_min)):
+            query["query"]["bool"]["must"].append({"range": { "user_reviews": {
+                "gte": int(user_reviews_min),
+                "lte": int(user_reviews_max)
+            }}})
+        else:
+            query["query"]["bool"]["must"].append({"range": { "user_reviews": { "gte": int(user_reviews_min) } } })
+    
     if(user_score_asc!= None):
         sorts.append({"user_score", "asc" if user_score_asc else "desc"})
-    print(start_date)
+
     if(start_date!= None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
@@ -157,42 +185,42 @@ def multisearch(
     return parse_data(response)
 
 
-@app.get(ROOT_PATH + "/user_score")
-def get_user_score(
-    max: bool = Query(None, description="Get the max/min user score (True = Maximum | False = Minimum)", ),
+@app.get(ROOT_PATH + "/user-reviews")
+def get_user_reviews(
+    max: bool = Query(None, description="Get the max/min user reviews (True = Maximum | False = Minimum)", ),
 ):
     query = { 
         "size": 0,
         "aggs": {}
     }  
     if max:
-        query["aggs"] = {"max_user_score": {"max": {"field": "user_score"}}}
+        query["aggs"] = {"max_user_reviews": {"max": {"field": "user_reviews"}}}
     else:
-        query["aggs"] = {"min_user_score": {"min": {"field": "user_score"}}}
+        query["aggs"] = {"min_user_reviews": {"min": {"field": "user_reviews"}}}
         
     response = es.search(index=INDEX, body=query)
     if "aggregations" in response:
-        return (response["aggregations"]["max_user_score"]["value"] if max 
-                else response["aggregations"]["min_user_score"]["value"])
+        return (response["aggregations"]["max_user_reviews"]["value"] if max 
+                else response["aggregations"]["min_user_reviews"]["value"])
     return response
 
-@app.get(ROOT_PATH + "/metascore")
-def get_metascore(
-    max: bool = Query(None, description="Get the max/min metascore (True = Maximum | False = Minimum)", ),
+@app.get(ROOT_PATH + "/critic-reviews")
+def get_critic_reviews(
+    max: bool = Query(None, description="Get the max/min critic reviews (True = Maximum | False = Minimum)", ),
 ):
     query = { 
         "size": 0,
         "aggs": {}
     }  
     if max:
-        query["aggs"] = {"max_metascore": {"max": {"field": "metascore"}}}
+        query["aggs"] = {"max_critic_reviews": {"max": {"field": "critic_reviews"}}}
     else:
-        query["aggs"] = {"min_metascore": {"min": {"field": "metascore"}}}
+        query["aggs"] = {"min_critic_reviews": {"min": {"field": "critic_reviews"}}}
         
     response = es.search(index=INDEX, body=query)
     if "aggregations" in response:
-        return (response["aggregations"]["max_metascore"]["value"] if max 
-                else response["aggregations"]["min_metascore"]["value"])
+        return (response["aggregations"]["max_critic_reviews"]["value"] if max 
+                else response["aggregations"]["min_critic_reviews"]["value"])
     return response
 
 @app.get(ROOT_PATH + "/genres")

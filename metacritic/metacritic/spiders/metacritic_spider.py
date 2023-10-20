@@ -11,10 +11,7 @@ import json
 class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
     allowed_domains = ["metacritic.com", "fandom-prod.apigee.net"]
-    start_urls = ["https://www.metacritic.com/movie/no-one-will-save-you/", "https://www.metacritic.com/tv/breaking-bad/", "https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/"]
-    #start_urls = ["https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/"]
-    #start_urls = ["https://www.metacritic.com/movie/no-one-will-save-you/"]
-    #start_urls = ["https://www.metacritic.com/tv/breaking-bad/"]
+    start_urls = ["https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/", "https://www.metacritic.com/game/super-mario-bros-wonder/", "https://www.metacritic.com/game/elden-ring/"]
 
     def parse(self, response):
         item = MetacriticItem()
@@ -80,53 +77,10 @@ class MetacriticSpiderSpider(scrapy.Spider):
             publishers = response.css('.c-gameDetails_Distributor span.g-outer-spacing-left-medium-fluid::text').getall()
             producers_and_publishers = set()
             if developers:
-                producers_and_publishers.update([item.strip() for item in developers])
+                producers_and_publishers.update([(item.strip() + " (Developer)") for item in developers])
             if publishers:
-                producers_and_publishers.update([item.strip() for item in publishers])
-            item['producer'] = list(producers_and_publishers)
-
-        if "/movie/" in response.url:
-            ### MOVIES ONLY
-            # Producer and date of the product. 
-            movieDetails = response.css('.c-movieDetails_sectionContainer span.g-outer-spacing-left-medium-fluid::text')
-            if len(movieDetails) >= 1:
-                publisher = movieDetails[0].get().strip()
-                publishers = [x.strip() for x in publisher.split(',')]
-                item['producer'] = publishers
-                if len(movieDetails) >= 2:
-                    release_date = movieDetails[1].get().strip()
-                    try:
-                        date_obj = datetime.strptime(release_date.strip(), "%b %d, %Y")
-                        formatted_date = date_obj.strftime("%Y-%m-%d")
-                        item['release_date'] = formatted_date
-                    except ValueError:
-                        item['release_date'] = None
-                else:
-                    item['release_date'] = None
-            else:
-                item['producer'] = None
-                item['release_date'] = None
-        
-        if "/tv/" in response.url:
-            ### TV ONLY
-            # Producer of the product. 
-            production = response.css('.c-productionDetailsTv_sectionContainer ul.g-outer-spacing-left-medium-fluid li.c-productionDetailsTv_listItem::text').getall()
-            if production:
-                production_list = set()
-                production_list.update([item.strip() for item in production if item.strip()])
-                item['producer'] = list(production_list)
-            else:
-                item['producer'] = None
-
-            # Date of the product. 
-            release_date = response.css('.c-productionDetailsTv_sectionContainer span.g-outer-spacing-left-medium-fluid::text').get()
-            if release_date:
-                try:
-                    date_obj = datetime.strptime(release_date.strip(), "%b %d, %Y")
-                    formatted_date = date_obj.strftime("%Y-%m-%d")
-                    item['release_date'] = formatted_date
-                except ValueError:
-                    item['release_date'] = None
+                producers_and_publishers.update([(item.strip() + " (Publisher)") for item in publishers])
+            item['companies'] = list(producers_and_publishers)
 
         # Scrap Metacritic API script to get additional information and return the item.
         return self.find_api_script(response, item)
@@ -159,12 +113,10 @@ class MetacriticSpiderSpider(scrapy.Spider):
             item['video_type'] = None
             item['sentiment'] = None
             item['must_play'] = False
-            item['cast_crew'] = None
+            item['crew'] = None
             item['countries'] = None
-            item['companies'] = None
             item['platforms'] = None
             item['rating'] = None
-            item['seasons'] = 0
             item['official_site'] = None
             return item
 
@@ -181,24 +133,14 @@ class MetacriticSpiderSpider(scrapy.Spider):
         item['sentiment'] = (None if "sentiment" not in data["data"]["item"]["criticScoreSummary"] else data["data"]["item"]["criticScoreSummary"]["sentiment"])
         item['must_play'] = (False if "mustPlay" not in data["data"]["item"] else data["data"]["item"]["mustPlay"])
 
-        cast_crew = []
-        if "cast" in data["data"]["item"]["production"]:
-            for cast in data["data"]["item"]["production"]["cast"]:
-                cast_member = cast["name"] + " (" + ', '.join(cast["roles"]) + ")"
-                cast_crew.append(cast_member)
-        elif "crew" in data["data"]["item"]["production"]:
-            for crew in data["data"]["item"]["production"]["crew"]:
-                crew_member = crew["name"] + " (" + ', '.join(crew["roles"]) + ")"
-                cast_crew.append(crew_member)
+        crew = []
+        if "crew" in data["data"]["item"]["production"]:
+            for c in data["data"]["item"]["production"]["crew"]:
+                crew_member = c["name"] + " (" + ', '.join(c["roles"]) + ")"
+                crew.append(crew_member)
 
-        item['cast_crew'] = (None if cast_crew == [] else cast_crew)
+        item['crew'] = (None if crew == [] else crew)
         item['countries'] = (None if "countries" not in data["data"]["item"] else data["data"]["item"]["countries"])
-
-        companies = []
-        if "companies" in data["data"]["item"]["production"]:
-            for company in data["data"]["item"]["production"]["companies"]:
-                companies.append(company["name"] + (None if company["typeName"] == "null" else " - (" + company["typeName"])  + ")")       
-        item['companies'] = (None if companies == [] else companies)
 
         platforms = []
         if "platforms" in data["data"]["item"]:
@@ -211,8 +153,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
         if "officialSite" in data["data"]["item"]["production"]:
             item['official_site'] = (None if data["data"]["item"]["production"]["officialSite"] else data["data"]["item"]["production"]["officialSite"])
         elif "officialSiteUrl" in data["data"]["item"]["production"]:
-            item['official_site'] = (None if data["data"]["item"]["production"]["officialSiteUrl"] == "null" else data["data"]["item"]["production"]["officialSiteUrl"]) 
-        item['seasons'] = (0 if "seasonCount" not in data["data"]["item"] else data["data"]["item"]["seasonCount"])
+            item['official_site'] = (None if data["data"]["item"]["production"]["officialSiteUrl"] == "null" else data["data"]["item"]["production"]["officialSiteUrl"])
 
         if data["data"]["item"]["video"] != None:
             if "url" in data["data"]["item"]["video"]:

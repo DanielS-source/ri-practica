@@ -1,5 +1,6 @@
+import re
 from typing import Union
-from fastapi import APIRouter, Depends, FastAPI, Query
+from fastapi import APIRouter, Body, Depends, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 import uvicorn
 from elasticsearch import Elasticsearch
 import datetime
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -35,6 +37,32 @@ app.add_middleware(
     allow_headers=headers,
 )
 
+class MetacriticItem(BaseModel):
+    title: str | None = None
+    title_asc: bool | None = None
+    genre: str | None = None
+    platform: str | None = None
+    country: str | None = None
+    metascore_min: int | None = None
+    metascore_max: int | None = None
+    critic_reviews_min: int | None = None
+    critic_reviews_max: int | None = None
+    metascore_asc: bool | None = None
+    user_score_min: int | None = None
+    user_score_max: int | None = None
+    user_reviews_min: int | None = None
+    user_reviews_max: int | None = None
+    user_score_asc: bool | None = None
+    start_date: datetime.date | None = None
+    end_date: datetime.date | None = None
+    date_asc: bool | None = None
+    page: int | None = 0
+    size: int | None = PAGE_SIZE
+
+# Transforms the string removing special characters, leaving only letters, numbers and spaces.
+def normalize_string(input_string):    
+    return re.sub(r'[^a-zA-Z0-9\s]', '', input_string)
+
 def parse_data(response):
     server_response = {
         "time": response["took"],
@@ -45,135 +73,130 @@ def parse_data(response):
     return JSONResponse(content=server_response)
 
 @app.get(ROOT_PATH + "/")
-def get_all_results():
+def get_all_results(
+    page: int = Query(0, description="Page", ),
+    size: int = Query(PAGE_SIZE, description="Size", ),
+):
     query = {
+        "size": PAGE_SIZE,
+        "from": 0,
         "query": {
             "match_all": {}  
         }
     }
+    if(size < PAGE_SIZE):
+        query["size"] = PAGE_SIZE
     response = es.search(index=INDEX, body=query)
     return parse_data(response)
 
-@app.get(ROOT_PATH + "/search")
+@app.post(ROOT_PATH + "/search")
 def multisearch(
-    title: str = Query(None, description="Title", ),
-    title_asc: bool = Query(None, description="Title asc (True) / desc (False)", ),
-    genre: str = Query(None, description="Genre (Use commas for multiples genres)", ),
-    platform: str = Query(None, description="Platforms (Use commas for multiples platforms)", ),
-    country: str = Query(None, description="Countries (Use commas for multiples countries)", ),
-    metascore_min: int = Query(None, description="Metascore min", ),
-    metascore_max: int = Query(None, description="Metascore max", ),
-    critic_reviews_min: int = Query(None, description="Metascore reviews min", ),
-    critic_reviews_max: int = Query(None, description="Metascore reviews max", ),
-    metascore_asc: bool = Query(None, description="Metascore asc (True) / desc (False)", ),
-    user_score_min: int = Query(None, description="User score min", ),
-    user_score_max: int = Query(None, description="User score max", ),
-    user_reviews_min: int = Query(None, description="User reviews min", ),
-    user_reviews_max: int = Query(None, description="User reviews max", ),
-    user_score_asc: bool = Query(None, description="User score asc (True) / desc (False)", ),
-    start_date: datetime.date = Query(None, description="Start date", ),
-    end_date: datetime.date = Query(None, description="End date", ),
-    date_asc: bool = Query(None, description="Date asc (True) / desc (False)", ),
-    page: int = Query(0, description="Page", ),
-    size: int = Query(PAGE_SIZE, description="Size", ),
+    item: MetacriticItem
 ):
     sorts = []
     # Query template
     query = {
-        "size": int(size),
-        "from": int(page),
+        "size": int(item.size),
+        "from": int(item.page),
         "query": {},  
         "sort": []
     }
     range = 0
-    if(size < PAGE_SIZE):
+    if(item.size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
-    if(title != None):
-        query["query"]["match_phrase_prefix"] = {"title": title}
-    if(title_asc != None):
-        sorts.append({"title", "asc" if title_asc else "desc"})
-    if(genre != None):
+    if(item.title != None and len(item.title) > 0):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        genres = genre.split(", ")
+        query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
+    if(item.title_asc != None):
+        sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})
+    if(item.genre != None):
+        if("bool" not in query["query"]):
+            query["query"]["bool"] = {"must": []}
+        genres = item.genre.split(", ")
         query["query"]["bool"] = {"must": []}
         for g in genres:
             query["query"]["bool"]["must"].append({"match": {"genre": g}})
-    if(platform != None):
+    if(item.platform != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        platforms = platform.split(", ")
+        platforms = item.platform.split(", ")
         for p in platforms:
             query["query"]["bool"]["must"].append({"match": {"platforms": p}})
-    if(country != None):
+    if(item.country != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        countries = country.split(", ")
+        countries = item.country.split(", ")
         for c in countries:
             query["query"]["bool"]["must"].append({"match": {"countries": c}})
-    if(metascore_min != None):
+    if(item.metascore_min != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        if(metascore_max != None and int(metascore_max) >= int(metascore_min)):
+        if(item.metascore_max != None and int(item.metascore_max) >= int(item.metascore_min)):
             query["query"]["bool"]["must"].append({"range": { "metascore": {
-                "gte": int(metascore_min),
-                "lte": int(metascore_max)
+                "gte": int(item.metascore_min),
+                "lte": int(item.metascore_max)
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(metascore_min) } } })
+            query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(item.metascore_min) } } })
 
-    if(critic_reviews_min != None):
+    if(item.critic_reviews_min != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        if(critic_reviews_max != None and int(critic_reviews_max) >= int(critic_reviews_min)):
+        if(item.critic_reviews_max != None and int(item.critic_reviews_max) >= int(item.critic_reviews_min)):
             query["query"]["bool"]["must"].append({"range": { "critic_reviews": {
-                "gte": int(critic_reviews_min),
-                "lte": int(critic_reviews_max)
+                "gte": int(item.critic_reviews_min),
+                "lte": int(item.critic_reviews_max)
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "critic_reviews": { "gte": int(critic_reviews_min) } } })
+            query["query"]["bool"]["must"].append({"range": { "critic_reviews": { "gte": int(item.critic_reviews_min) } } })
 
-    if(metascore_asc != None):
-        sorts.append({"metascore", "asc" if metascore_asc else "desc"})
-    if(user_score_min != None):
+    if(item.metascore_asc != None):
+        sorts.append({"metascore": ("asc" if item.metascore_asc else "desc")})
+    if(item.user_score_min != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        if(user_score_max!= None and int(user_score_max) >= int(user_score_min)):
+        if(item.user_score_max!= None and int(item.user_score_max) >= int(item.user_score_min)):
             query["query"]["bool"]["must"].append({"range": { "user_score": {
-                "gte": int(user_score_min),
-                "lte": int(user_score_max)
+                "gte": int(item.user_score_min),
+                "lte": int(item.user_score_max)
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "user_score": { "gte": int(user_score_min) } } })
+            query["query"]["bool"]["must"].append({"range": { "user_score": { "gte": int(item.user_score_min) } } })
 
-    if(user_reviews_min != None):
+    if(item.user_reviews_min != None):
         if("bool" not in query["query"]):
             query["query"]["bool"] = {"must": []}
-        if(user_reviews_max!= None and int(user_reviews_max) >= int(user_reviews_min)):
+        if(item.user_reviews_max!= None and int(item.user_reviews_max) >= int(item.user_reviews_min)):
             query["query"]["bool"]["must"].append({"range": { "user_reviews": {
-                "gte": int(user_reviews_min),
-                "lte": int(user_reviews_max)
+                "gte": int(item.user_reviews_min),
+                "lte": int(item.user_reviews_max)
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "user_reviews": { "gte": int(user_reviews_min) } } })
+            query["query"]["bool"]["must"].append({"range": { "user_reviews": { "gte": int(item.user_reviews_min) } } })
     
-    if(user_score_asc!= None):
-        sorts.append({"user_score", "asc" if user_score_asc else "desc"})
+    if(item.user_score_asc!= None):
+        sorts.append({"user_score": ("asc" if item.user_score_asc else "desc")})
 
-    if(start_date!= None):
+    if(item.start_date!= None):
         if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
-        if(end_date != None and start_date <= end_date):
-            query["query"]["bool"]["must"].append({"range": { "release_date": {
-                "gte": start_date.strftime("%Y-%m-%d"),
-                "lte": end_date.strftime("%Y-%m-%d")
+            query["query"]["bool"] = {"should": []}
+        elif ("should" not in query["query"]["bool"]):
+            query["query"]["bool"] = {"should": []}
+
+        if(item.end_date != None and item.start_date <= item.end_date):
+            query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
+            query["query"]["bool"]["should"].append({"range": { "release_date": {
+                "gte": item.start_date.strftime("%Y-%m-%d"),
+                "lte": item.end_date.strftime("%Y-%m-%d")
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "release_date": {
-                "gte": start_date.strftime("%Y-%m-%d")
+            query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
+            query["query"]["bool"]["should"].append({"range": { "release_date": {
+                "gte": item.start_date.strftime("%Y-%m-%d")
             }}})
-    if(date_asc!= None):
-        sorts.append({"date_asc", "asc" if date_asc else "desc"})
+    if(item.date_asc!= None):
+        sorts.append({"release_date": ("asc" if item.date_asc else "desc")})
 
     query["sort"] = sorts
     if(query["query"] == {}):

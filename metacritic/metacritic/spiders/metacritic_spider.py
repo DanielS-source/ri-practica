@@ -11,7 +11,7 @@ import json
 class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
     allowed_domains = ["metacritic.com", "fandom-prod.apigee.net"]
-    start_urls = ["https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/", "https://www.metacritic.com/game/super-mario-bros-wonder/", "https://www.metacritic.com/game/elden-ring/", "https://www.metacritic.com/game/stalker-2-heart-of-chernobyl/"]
+    start_urls = ["https://www.metacritic.com/game/the-elder-scrolls-v-skyrim/", "https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/", "https://www.metacritic.com/game/super-mario-bros-wonder/", "https://www.metacritic.com/game/elden-ring/", "https://www.metacritic.com/game/stalker-2-heart-of-chernobyl/"]
     image_path = "https://www.metacritic.com/a/img/catalog"
     video_path = "https://cdn.jwplayer.com/manifests/"
 

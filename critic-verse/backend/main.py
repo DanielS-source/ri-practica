@@ -98,40 +98,29 @@ def multisearch(
     query = {
         "size": int(item.size),
         "from": int(item.page),
-        "query": {},  
+        "query": {"bool": {"must": [], "should": []}},  
         "sort": []
     }
     range = 0
     if(item.size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
     if(item.title != None and len(item.title) > 0):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
     if(item.title_asc != None):
         sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})
     if(item.genre != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         genres = item.genre.split(", ")
-        query["query"]["bool"] = {"must": []}
         for g in genres:
-            query["query"]["bool"]["must"].append({"match": {"genre": g}})
+            query["query"]["bool"]["should"].append({"match": {"genre": g}})
     if(item.platform != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         platforms = item.platform.split(", ")
         for p in platforms:
             query["query"]["bool"]["must"].append({"match": {"platforms": p}})
     if(item.country != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         countries = item.country.split(", ")
         for c in countries:
             query["query"]["bool"]["must"].append({"match": {"countries": c}})
     if(item.metascore_min != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         if(item.metascore_max != None and int(item.metascore_max) >= int(item.metascore_min)):
             query["query"]["bool"]["must"].append({"range": { "metascore": {
                 "gte": int(item.metascore_min),
@@ -141,8 +130,6 @@ def multisearch(
             query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(item.metascore_min) } } })
 
     if(item.critic_reviews_min != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         if(item.critic_reviews_max != None and int(item.critic_reviews_max) >= int(item.critic_reviews_min)):
             query["query"]["bool"]["must"].append({"range": { "critic_reviews": {
                 "gte": int(item.critic_reviews_min),
@@ -154,8 +141,6 @@ def multisearch(
     if(item.metascore_asc != None):
         sorts.append({"metascore": ("asc" if item.metascore_asc else "desc")})
     if(item.user_score_min != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         if(item.user_score_max!= None and int(item.user_score_max) >= int(item.user_score_min)):
             query["query"]["bool"]["must"].append({"range": { "user_score": {
                 "gte": int(item.user_score_min),
@@ -165,8 +150,6 @@ def multisearch(
             query["query"]["bool"]["must"].append({"range": { "user_score": { "gte": int(item.user_score_min) } } })
 
     if(item.user_reviews_min != None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"must": []}
         if(item.user_reviews_max!= None and int(item.user_reviews_max) >= int(item.user_reviews_min)):
             query["query"]["bool"]["must"].append({"range": { "user_reviews": {
                 "gte": int(item.user_reviews_min),
@@ -179,11 +162,6 @@ def multisearch(
         sorts.append({"user_score": ("asc" if item.user_score_asc else "desc")})
 
     if(item.start_date!= None):
-        if("bool" not in query["query"]):
-            query["query"]["bool"] = {"should": []}
-        elif ("should" not in query["query"]["bool"]):
-            query["query"]["bool"] = {"should": []}
-
         if(item.end_date != None and item.start_date <= item.end_date):
             query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
             query["query"]["bool"]["should"].append({"range": { "release_date": {
@@ -201,9 +179,6 @@ def multisearch(
     query["sort"] = sorts
     if(query["query"] == {}):
         query["query"] = {"match_all": {}}
-    print("\n")
-    print(query)
-    print("\n")
     response = es.search(index=INDEX, body=query)
     return parse_data(response)
 

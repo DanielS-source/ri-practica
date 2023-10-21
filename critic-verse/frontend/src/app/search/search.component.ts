@@ -3,6 +3,7 @@ import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDrawer } from '@angular/material/sidenav';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { SearchService } from './search.service';
 
 @Component({
   selector: 'app-search',
@@ -14,6 +15,7 @@ export class SearchComponent implements OnInit, OnDestroy  {
   maxCriticVotes: number = 0;
   genres: string[] = [];
   items: any[] = [];
+  card_image: string[] = [];
 
   private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -21,17 +23,18 @@ export class SearchComponent implements OnInit, OnDestroy  {
 
   constructor(
     private _fb: FormBuilder,
-    private _route: ActivatedRoute
+    private _route: ActivatedRoute,
+    private _searchService: SearchService
   ) {
     this.form = this._fb.group({
-      searchQuery: [undefined],
-      selectedGenres: new FormControl([]),
-      startDate: [undefined],
-      endDate: [undefined],
-      userMin: [undefined],
-      userMax: [undefined],
-      criticMin: [undefined],
-      criticMax: [undefined]
+      title: null,
+      genres: new FormControl([]),
+      start_date: null,
+      end_date: null,
+      user_reviews_min: 0,
+      user_reviews_max: 0,
+      critic_reviews_min: 0,
+      critic_reviews_max: 0
     });
   }
 
@@ -41,16 +44,17 @@ export class SearchComponent implements OnInit, OnDestroy  {
       this.maxCriticVotes = resolve.maxCriticVotes;
       this.genres = resolve.genres;
       this.items = resolve.items;
+      this.card_image = resolve.card_image;
       this.updateForm()
       console.log(resolve)
     })
   }
   updateForm() {
     this.form.patchValue({
-      userMin: [0],
-      userMax: [this.maxUserVotes],
-      criticMin: [0],
-      criticMax: [this.maxCriticVotes]
+      user_reviews_min: 0,
+      user_reviews_max: this.maxUserVotes,
+      critic_reviews_min: 0,
+      critic_reviews_max: this.maxCriticVotes
     })
   }
 
@@ -60,7 +64,24 @@ export class SearchComponent implements OnInit, OnDestroy  {
   }
 
   submitForm() {
+    let genres, s_date, e_date;
     const formData = this.form.value;
+    if(Array.isArray(formData.genres) && formData.genres.length > 0) {
+      let genres = formData.genres.join(", ");
+      formData.genre = genres;
+    }else formData.genre = null;
+    if(formData.start_date instanceof Date) {
+      let s_date = formData.start_date.toLocaleDateString('es-ES', {year: 'numeric', month: '2-digit', day: '2-digit'}).replaceAll("\/", "-");
+      formData.start_date = s_date;
+    }
+    if(formData.end_date instanceof Date) {
+      let e_date = formData.end_date.toLocaleDateString('es-ES', {year: 'numeric', month: '2-digit', day: '2-digit'}).replaceAll("\/", "-");
+      formData.end_date = e_date;
+    }
     console.log('Form Data:', formData);
+    this._searchService.searchItems(formData).pipe(takeUntil(this._unsubscribeAll)).subscribe((response: any) => {
+      console.log(response);
+      this.items = response.hits.map((hit: { _source: any; }) => hit._source);
+    });
   }
 }

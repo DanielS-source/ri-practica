@@ -23,14 +23,36 @@ class ElasticsearchPipeline:
     
     def create_index(self):
         if not self.es.indices.exists(index=self.index_name):
+            settings = {"analysis": {
+                    "analyzer": {
+                        "edge_ngram_analyzer": {
+                        "tokenizer": "edge_ngram_tokenizer",
+                        "filter": ["lowercase"]                # If text is not lowercased, this lowercase it. 
+                        }
+                    },
+                    "tokenizer": {
+                        "edge_ngram_tokenizer": {
+                            "type": "edge_ngram",              # Partial match search
+                            "min_gram": 2,                     # Minimum length of n-grams at the beggining of each word ("Mario" => "Ma", "Ring" => "Ri"...)
+                            "max_gram": 20,                    # Maximum length of n-grams
+                            "token_chars": ["letter", "digit"] # N-grams generated with letters and digits
+                        }
+                    }
+                }
+            }
             mapping = {
                 "properties": {
+                    "title": {"type": "text"},
+                    "title_search": {
+                        "type": "text",
+                        "analyzer": "edge_ngram_analyzer"
+                    },
+                    "title_keyword": {"type": "keyword"},
                     "critic_reviews": {"type": "integer"},
                     "genre": {"type": "keyword"},
                     "metascore": {"type": "integer"},
                     "release_date": {"type": "date", "format": "yyyy-MM-dd"},
                     "summary": {"type": "text"},
-                    "title": {"type": "text"},
                     "url": {"type": "keyword"},
                     "user_reviews": {"type": "integer"},
                     "user_score": {"type": "float"},
@@ -47,7 +69,7 @@ class ElasticsearchPipeline:
                     "official_site": {"type": "keyword"}
                 }
             }
-            self.es.indices.create(index=self.index_name, body={"mappings": mapping})
+            self.es.indices.create(index=self.index_name, body={"settings": settings, "mappings": mapping})
 
     def process_item(self, item, spider):
         data = dict(item)

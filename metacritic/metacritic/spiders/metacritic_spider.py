@@ -11,7 +11,14 @@ import json
 class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
     allowed_domains = ["metacritic.com", "fandom-prod.apigee.net"]
-    start_urls = ["https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/", "https://www.metacritic.com/game/super-mario-bros-wonder/", "https://www.metacritic.com/game/elden-ring/"]
+    start_urls = ["https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/", "https://www.metacritic.com/game/payday-3/", "https://www.metacritic.com/game/super-mario-bros-wonder/", "https://www.metacritic.com/game/elden-ring/", "https://www.metacritic.com/game/stalker-2-heart-of-chernobyl/"]
+    image_path = "https://www.metacritic.com/a/img/catalog"
+    video_path = "https://cdn.jwplayer.com/manifests/"
+
+
+    # Transforms the string to lowercase and then removes special characters, leaving only letters, numbers and spaces.
+    def normalize_string(self, input_string):    
+        return re.sub(r'[^a-zA-Z0-9\s]', '', input_string.lower())
 
     def parse(self, response):
         item = MetacriticItem()
@@ -19,6 +26,8 @@ class MetacriticSpiderSpider(scrapy.Spider):
         # Product title
         title = response.css('.c-productHero_title div::text').get()
         item['title'] = (title.strip() if title else None)
+        item['title_search'] = (self.normalize_string(title.strip()) if title else None)
+        item['title_keyword'] = (self.normalize_string(title.strip()) if title else None)
 
         # Metacritic url
         item['url'] = response.url.strip()
@@ -33,19 +42,25 @@ class MetacriticSpiderSpider(scrapy.Spider):
 
         # Critics average score
         metascore = response.css('.c-productScoreInfo_scoreNumber span::text').get()
-        item['metascore'] = (metascore.strip() if metascore else None)
+        item['metascore'] = (metascore.strip() if metascore else 0)
 
         # Critic reviews count
         critic_reviews_count_text = response.css('.c-productScoreInfo_reviewsTotal a span::text').get()
-        match = (re.search(r'\d+', critic_reviews_count_text) if critic_reviews_count_text else False)
-        critic_reviews_count = int(match.group())
-        item['critic_reviews'] = (critic_reviews_count if match else None)
+        try:
+            match = (re.search(r'\d+', critic_reviews_count_text) if critic_reviews_count_text else False)
+            critic_reviews_count = int(match.group())
+        except:
+            match = False
+        item['critic_reviews'] = (critic_reviews_count if match else 0)
         
         # Users average score
         # Often critics have earlier access to the product so there may be a situation where no user score is available
         user_score = response.css('.c-siteReviewScore_background-user span[data-v-4cdca868]::text').get()
-        user_score = (user_score.strip() if user_score else None)
-        item['user_score'] = (None if user_score.lower() == 'tbd' and user_score != None else user_score)
+        try:
+            user_score = (user_score.strip() if user_score else 0)
+        except:
+            user_score = None
+        item['user_score'] = (0 if user_score.lower() == 'tbd' and user_score != None else user_score)
 
         # User reviews count
         user_reviews_count_text = response.css('.c-productScoreInfo_reviewsTotal a span::text')
@@ -55,9 +70,9 @@ class MetacriticSpiderSpider(scrapy.Spider):
                 user_reviews_count = int(match.group())
                 item['user_reviews'] = user_reviews_count
             else:
-                item['user_reviews'] = None
+                item['user_reviews'] = 0
         else:
-            item['user_reviews'] = None
+            item['user_reviews'] = 0
 
         ## SPECIFIC ITEMS
         if "/game/" in response.url:
@@ -126,7 +141,10 @@ class MetacriticSpiderSpider(scrapy.Spider):
         img = data["data"]["item"]["images"][1]["bucketPath"]
         img_poster = data["data"]["item"]["images"][0]["bucketPath"]
         img_ext = "jpg"
-        item['images'] = img +", "+img_poster
+        images = []
+        images.append(self.image_path + img)
+        images.append(self.image_path + img_poster)
+        item['images'] = images
         video = ""
         video_type = "application/x-mpegURL"
 
@@ -162,7 +180,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             else:
                 video = data["data"]["item"]["video"]["videoLinks"][0]["videoLinks"][0]["linkUrl"]
                 video = video + ".m3u8"
-            item['video'] = video
+            item['video'] = self.video_path + video
             item['video_type'] = video_type
         else:
             self.logger.debug('Nothing found')

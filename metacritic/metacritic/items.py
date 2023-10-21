@@ -9,6 +9,8 @@ import scrapy
 class MetacriticItem(scrapy.Item):
     # define the fields for your item here like:
     title = scrapy.Field()
+    title_search = scrapy.Field()  # For searching purposes
+    title_keyword = scrapy.Field() # For ordering purposes
     url = scrapy.Field()
     summary = scrapy.Field()
     genre = scrapy.Field()

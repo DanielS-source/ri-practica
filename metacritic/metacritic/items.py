@@ -3,30 +3,62 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+import json
+from scrapy.item import Item, Field
 
-
-class MetacriticItem(scrapy.Item):
+class MetacriticItem(Item):
     # define the fields for your item here like:
-    title = scrapy.Field()
-    title_search = scrapy.Field()  # For searching purposes
-    title_keyword = scrapy.Field() # For ordering purposes
-    url = scrapy.Field()
-    summary = scrapy.Field()
-    genre = scrapy.Field()
-    metascore = scrapy.Field()
-    critic_reviews = scrapy.Field()
-    user_score = scrapy.Field()
-    user_reviews = scrapy.Field()
-    release_date = scrapy.Field()
-    images = scrapy.Field()
-    video = scrapy.Field()
-    video_type = scrapy.Field()
-    sentiment = scrapy.Field()
-    must_play = scrapy.Field()
-    crew = scrapy.Field()
-    countries = scrapy.Field()
-    companies = scrapy.Field()
-    platforms = scrapy.Field()
-    rating = scrapy.Field()
-    official_site = scrapy.Field()
+    title = Field()
+    title_search = Field()  # For searching purposes
+    title_keyword = Field() # For ordering purposes
+    url = Field()
+    summary = Field()
+    genre = Field()
+    metascore = Field()
+    critic_reviews = Field()
+    user_score = Field()
+    user_reviews = Field()
+    release_date = Field()
+    images = Field()
+    video = Field()
+    video_type = Field()
+    sentiment = Field()
+    must_play = Field()
+    crew = Field()
+    countries = Field()
+    companies = Field()
+    platforms = Field()
+    rating = Field()
+    official_site = Field()
+
+
+
+class MetacriticItemEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, MetacriticItem):
+            return {
+                'title': (obj["title"] if "title" in obj else None),   
+                'title_search': (obj["title_search"] if "title_search" in obj else None),  
+                'title_keyword': (obj["title_keyword"] if "title_keyword" in obj else None),  
+                'url': (obj["url"] if "url" in obj else None), 
+                'summary': (obj["summary"] if "summary" in obj else None), 
+                'genre': (obj["genre"] if "genre" in obj else None), 
+                'metascore': (obj["metascore"] if "metascore" in obj else None), 
+                'critic_reviews': (obj["critic_reviews"] if "critic_reviews" in obj else 0),  
+                'user_score': (obj["user_score"] if "user_reviews" in obj else None), 
+                'user_reviews': (obj["user_reviews"] if "user_reviews" in obj else 0), 
+                'release_date': (obj["release_date"] if "release_date" in obj else None), 
+                'images': (obj["images"] if "images" in obj else []), 
+                'video': (obj["video"] if "video" in obj else ""), 
+                'video_type': (obj["video_type"] if "video_type" in obj else None),
+                'sentiment': (obj["sentiment"] if "sentiment" in obj else None), 
+                'must_play': (obj["must_play"] if "must_play" in obj else None),
+                'crew': (obj["crew"] if "crew" in obj else None),
+                'countries': (obj["countries"] if "country" in obj else []), 
+                'companies': (obj["companies"] if "companies" in obj else None),  
+                'platforms': (obj["platforms"] if "platforms" in obj else []),   
+                'rating': (obj["rating"] if "rating" in obj else None), 
+                'official_site': (obj["official_site"] if "official_site" in obj else None) 
+            }
+            return {}
+        return super().default(obj)

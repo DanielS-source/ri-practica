@@ -5,16 +5,25 @@
 
 
 # useful for handling different item types with a single interface
+import json
+import os
 from elasticsearch import Elasticsearch
+from metacritic.items import MetacriticItemEncoder
 
 class ElasticsearchPipeline:
+    items = []
+    data_path = "data.json"
+
     def __init__(self, elastic_settings):
         self.elastic_settings = elastic_settings
         self.index_name = elastic_settings['index_name']
         self.es = Elasticsearch([elastic_settings['host']])
-        if self.es.indices.exists(index=self.index_name) and elastic_settings['delete_index']:
-            self.es.indices.delete(index=self.index_name)
+        self.delete_index()
         self.create_index()
+    
+    def delete_index(self):
+        if self.es.indices.exists(index=self.index_name) and self.elastic_settings['delete_index']:
+            self.es.indices.delete(index=self.index_name)
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -73,8 +82,27 @@ class ElasticsearchPipeline:
 
     def process_item(self, item, spider):
         data = dict(item)
+        # Save the item in the items list
         self.es.index(index=self.index_name, body=data)
+        self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
         return item
+    
+    # In this function we save the items into a json file or if exists we load it
+    def close_spider(self, spider):
+        if len(self.items) == 0 and os.path.exists(self.data_path):
+            spider.logger.debug("Loading data from file...")
+            try:
+                with open(self.data_path, 'r') as f:
+                    items = json.load(f)
+                    for item in items:
+                        self.es.index(index=self.index_name, body=item)
+                    self.es.indices.refresh(index=self.index_name)
+                spider.logger.debug("Data loaded successfully!")
+            except Exception as e:
+                spider.logger.error(e)
+        else: 
+            with open(self.data_path, 'w') as file:
+                file.write(json.dumps(self.items))
 
 
 

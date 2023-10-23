@@ -106,7 +106,7 @@ class ElasticsearchPipeline:
 
         # Save the partition
         if len(self.items) == self.items_partition:
-            writer = threading.Thread(target=self.write_data)
+            writer = threading.Thread(target=self.write_data(spider))
             writer.start()
 
         return item
@@ -114,18 +114,18 @@ class ElasticsearchPipeline:
 
     # In this function we check if data partitions exist and load them
     def load_data_partitions(self, spider):
-        self.data_items = 0
-        while os.path.exists(self.data_dir + "/" + self.data_path):
-            try:
-                with open(self.data_dir + "/"+ self.data_path, 'r') as f:
-                    items = json.load(f)
-                    for item in items:
-                        self.es.index(index=self.index_name, body=item)
-                    self.es.indices.refresh(index=self.index_name)
-                spider.logger.debug("Data loaded successfully! from partition: " + self.data_path)
-            except Exception as e:
-                spider.logger.error(e)
-            self.update_data_path()
+        for filename in os.listdir(self.data_dir):
+            file_path = os.path.join(self.data_dir, filename)
+            if os.path.isfile(file_path):
+                try:
+                    with open(file_path, 'r') as f:
+                        items = json.load(f)
+                        for item in items:
+                            self.es.index(index=self.index_name, body=item)
+                        self.es.indices.refresh(index=self.index_name)
+                    spider.logger.debug("Data loaded successfully! from partition: " + filename)
+                except Exception as e:
+                    spider.logger.error(e)
 
     def close_spider(self, spider):
         if len(self.items) == 0:

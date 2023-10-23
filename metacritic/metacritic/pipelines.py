@@ -9,10 +9,18 @@ import json
 import os
 from elasticsearch import Elasticsearch
 from metacritic.items import MetacriticItemEncoder
+import threading
 
 class ElasticsearchPipeline:
-    items = []
-    data_path = "data.json"
+    items = []                                      # Item list
+    items_partition = 25                            # Number of items per partition
+    data_item = 0                                   # Data partition index
+    data_dir = "data"                               # Partition data directory
+    data_path = "data-part-"+str(data_item)+".json" # Partition data file path
+
+    def update_data_path(self):
+        self.data_item += 1
+        self.data_path = "data-part-"+str(self.data_item)+".json"
 
     def __init__(self, elastic_settings):
         self.elastic_settings = elastic_settings
@@ -20,6 +28,9 @@ class ElasticsearchPipeline:
         self.es = Elasticsearch([elastic_settings['host']])
         self.delete_index()
         self.create_index()
+        # Using os to create the data directory if it does not exist because of retrocompatibility
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
     
     def delete_index(self):
         if self.es.indices.exists(index=self.index_name) and self.elastic_settings['delete_index']:
@@ -80,29 +91,47 @@ class ElasticsearchPipeline:
             }
             self.es.indices.create(index=self.index_name, body={"settings": settings, "mappings": mapping})
 
+    def write_data(self, spider):
+        spider.logger.debug("Writting data to file... "+ self.data_dir + "/"+  self.data_path)
+        with open(self.data_dir + "/"+ self.data_path, 'w') as file:
+            file.write(json.dumps(self.items))
+        self.items = []
+        self.update_data_path()
+
     def process_item(self, item, spider):
         data = dict(item)
         # Save the item in the items list
         self.es.index(index=self.index_name, body=data)
         self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
+
+        # Save the partition
+        if len(self.items) == self.items_partition:
+            writer = threading.Thread(target=self.write_data)
+            writer.start()
+
         return item
     
-    # In this function we save the items into a json file or if exists we load it
-    def close_spider(self, spider):
-        if len(self.items) == 0 and os.path.exists(self.data_path):
-            spider.logger.debug("Loading data from file...")
+
+    # In this function we check if data partitions exist and load them
+    def load_data_partitions(self, spider):
+        self.data_items = 0
+        while os.path.exists(self.data_dir + "/" + self.data_path):
             try:
-                with open(self.data_path, 'r') as f:
+                with open(self.data_dir + "/"+ self.data_path, 'r') as f:
                     items = json.load(f)
                     for item in items:
                         self.es.index(index=self.index_name, body=item)
                     self.es.indices.refresh(index=self.index_name)
-                spider.logger.debug("Data loaded successfully!")
+                spider.logger.debug("Data loaded successfully! from partition: " + self.data_path)
             except Exception as e:
                 spider.logger.error(e)
-        else: 
-            with open(self.data_path, 'w') as file:
-                file.write(json.dumps(self.items))
+            self.update_data_path()
 
-
-
+    def close_spider(self, spider):
+        if len(self.items) == 0:
+            spider.logger.debug("Loading data from file...")
+            self.load_data_partitions(spider)
+        else:
+            # Items that not fill the partition will be written in another file to avoid losing data
+            writer = threading.Thread(target=self.write_data(spider))
+            writer.start()

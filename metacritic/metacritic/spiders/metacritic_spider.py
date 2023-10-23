@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import scrapy
 import re
 from metacritic.items import MetacriticItem
@@ -13,6 +13,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
     allowed_domains = ["metacritic.com", "fandom-prod.apigee.net"]
     start_urls = []
+    data_dir = "data"
     image_path = "https://www.metacritic.com/a/img/catalog"
     video_path = "https://cdn.jwplayer.com/manifests/"
 
@@ -22,7 +23,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
         return re.sub(r'[^a-zA-Z0-9\s]', '', input_string.lower())
     
     def start_requests(self):
-        if not os.path.exists("data.json"):
+        if not any(Path(self.data_dir).iterdir()):
             self.start_urls.append("https://www.metacritic.com/game/the-elder-scrolls-v-skyrim/")
             self.start_urls.append("https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/")
             self.start_urls.append("https://www.metacritic.com/game/payday-3/") 
@@ -32,7 +33,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             for url in self.start_urls:
                 yield scrapy.Request(url, callback=self.parse)
         else:
-            self.logger.info("Crawling not started because data.json exists.")
+            self.logger.info("Crawling not started because data partitions exist!")
 
     def parse(self, response):
         item = MetacriticItem()

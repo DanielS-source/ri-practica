@@ -23,7 +23,18 @@ services:
       - esnet
     volumes:
       - esdata:/usr/share/elasticsearch/data
-
+  python-server:
+    build:
+      context: ./critic-verse/backend/
+      dockerfile: Dockerfile
+    container_name: python-server
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    depends_on:
+      - elasticsearch
+    networks:
+      - esnet
 volumes:
   esdata:
     driver: local

@@ -1,9 +1,9 @@
-<mat-drawer-container hasBackdrop="false">
+<mat-drawer-container hasBackdrop="false" class="h-full">
     <mat-drawer #drawer position="end" mode="over">
         <app-details [item]="selectedItem" (closeDrawerEvent)="closeDrawer()"></app-details>
     </mat-drawer>
     <mat-drawer-content>
-        <div>
+        <div class="">
             <!-- Item -->
             <div *ngFor="let item of items"
                 (click)="setItem(item)"
@@ -20,6 +20,5 @@
         
             </div>
         </div>
-      <button mat-raised-button (click)="drawer.toggle()">Toggle</button>
     </mat-drawer-content>
 </mat-drawer-container>

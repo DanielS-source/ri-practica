@@ -16,16 +16,15 @@ export class SearchService {
   constructor(private _httpClient: HttpClient) { }
 
   getAllItems(): Observable<any[]> {
-    return this._httpClient.get<any[]>(`${environment.api}/search?size=${environment.pageSize}`, this.httpOptions)
+    return this._httpClient.get<any[]>(`${environment.api}/?size=${environment.pageSize}`, this.httpOptions)
       .pipe(
         map((response: any) => response.hits.map((hit: { _source: any; }) => hit._source))
-        // map((response: any) => response.hits.hits.map((hit: { _source: any; }) => hit._source))
       );
   }
 
   getMaxUserVotes(): Observable<number> {
     return this._httpClient.get<any>(
-      `${environment.api}/user_score?max=true`,
+      `${environment.api}/user-reviews?max=true`,
       this.httpOptions
     ).pipe(
       map((response: any) => response)
@@ -34,7 +33,7 @@ export class SearchService {
 
   getMaxCriticVotes(): Observable<number> {
     return this._httpClient.get<any>(
-      `${environment.api}/metascore?max=true`,
+      `${environment.api}/critic-reviews?max=true`,
       this.httpOptions
     ).pipe(
       map((response: any) => response)
@@ -48,5 +47,9 @@ export class SearchService {
     ).pipe(
       map((response: any) => response)
     );
+  }
+
+  searchItems(formData: any): Observable<any> {
+    return this._httpClient.post<any>(`${environment.api}/search`, formData, this.httpOptions);
   }
 }

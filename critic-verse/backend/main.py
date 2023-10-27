@@ -227,7 +227,7 @@ def get_genres():
         "size": 0,
         "aggs": {}
     }  
-    query["aggs"] = {"unique_genres": {"terms": {"field": 'genre'}}}
+    query["aggs"] = {"unique_genres": {"terms": {"field": 'genre', "order": { "_key": "asc" }}}}
         
     response = es.search(index=INDEX, body=query)
 

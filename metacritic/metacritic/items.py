@@ -43,7 +43,7 @@ class MetacriticItemEncoder(json.JSONEncoder):
                 'url': (obj["url"] if "url" in obj else None), 
                 'summary': (obj["summary"] if "summary" in obj else None), 
                 'genre': (obj["genre"] if "genre" in obj else None), 
-                'metascore': (obj["metascore"] if "metascore" in obj else None), 
+                'metascore': (obj["metascore"] if "metascore" in obj else 0), 
                 'critic_reviews': (obj["critic_reviews"] if "critic_reviews" in obj else 0),  
                 'user_score': (obj["user_score"] if "user_reviews" in obj else None), 
                 'user_reviews': (obj["user_reviews"] if "user_reviews" in obj else 0), 

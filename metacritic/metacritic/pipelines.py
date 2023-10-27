@@ -10,11 +10,14 @@ import os
 from elasticsearch import Elasticsearch
 from metacritic.items import MetacriticItemEncoder
 import threading
+from scrapy.exceptions import DropItem
+from metacritic.csv_parser import CSVParser
 
 class ElasticsearchPipeline:
     items = []                                      # Item list
-    items_partition = 25                            # Number of items per partition
+    threads = []                                    # Thread list
     data_item = 0                                   # Data partition index
+    n_items = 0                                     # Items processed
     data_dir = "data"                               # Partition data directory
     data_path = "data-part-"+str(data_item)+".json" # Partition data file path
 
@@ -99,24 +102,46 @@ class ElasticsearchPipeline:
         self.update_data_path()
 
     def process_item(self, item, spider):
-        data = dict(item)
-        # Save the item in the items list
-        self.es.index(index=self.index_name, body=data)
-        self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
+        max_items = spider.settings.getint('MAX_ITEMS_PROCESSED')
+        items_partition = spider.settings.getint('ITEMS_PARTITION')
+        first_item_page = spider.settings.getint('FIRST_ITEM_PAGE')
+        if (self.data_item < first_item_page):
+            self.data_item = first_item_page
+        if self.n_items < max_items:
+            data = dict(item)
+            # Save the item in elastic
+            self.es.index(index=self.index_name, body=data)
+            # Save the item in the items list
+            self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
 
-        # Save the partition
-        if len(self.items) == self.items_partition:
-            writer = threading.Thread(target=self.write_data(spider))
-            writer.start()
+            # Save the partition
+            if len(self.items) == items_partition:
+                writer = threading.Thread(target=self.write_data(spider))
+                writer.start()
+                self.threads.append(writer)
+            self.n_items += 1
+            spider.logger.debug("-------------------------------------------------------------------------")
+            spider.logger.debug("\t\t\tItems processed: " + str(self.n_items) + " / " + str(max_items) + " | " + str(max_items-self.n_items) + " left")
+            spider.logger.debug("-------------------------------------------------------------------------")
+            if spider.current_url is not None:
+                spider.logger.debug("\t\t\t"+spider.current_url)
+                spider.logger.debug("-------------------------------------------------------------------------")
+            return item
+        else:
+            spider.start_urls = []
+            spider.urls = []
+            spider.data_extracted = False
+            spider.extracting = False
+            spider.crawler.engine.close_spider(spider, 'crawling_stopped')
 
-        return item
+            raise DropItem("Crawling stopped due to reached máx. items.")
     
 
     # In this function we check if data partitions exist and load them
     def load_data_partitions(self, spider):
         for filename in os.listdir(self.data_dir):
             file_path = os.path.join(self.data_dir, filename)
-            if os.path.isfile(file_path):
+            if os.path.isfile(file_path) and filename.endswith(".json"):
                 try:
                     with open(file_path, 'r') as f:
                         items = json.load(f)
@@ -128,10 +153,18 @@ class ElasticsearchPipeline:
                     spider.logger.error(e)
 
     def close_spider(self, spider):
-        if len(self.items) == 0:
-            spider.logger.debug("Loading data from file...")
+        if len(self.items) == 0 and self.n_items < spider.settings.getint('MAX_ITEMS_PROCESSED'):
+            spider.logger.debug("Loading data from file(s)...")
             self.load_data_partitions(spider)
         else:
             # Items that not fill the partition will be written in another file to avoid losing data
             writer = threading.Thread(target=self.write_data(spider))
+            self.threads.append(writer)
             writer.start()
+            # Wait until all threads are finished
+            for thread in self.threads:
+                thread.join()
+            # Transform the data into a CSV file
+            spider.logger.debug("Transforming data into CSV file...")
+            CSVParser()
+            

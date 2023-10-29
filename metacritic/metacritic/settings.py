@@ -12,6 +12,15 @@ BOT_NAME = "metacritic"
 SPIDER_MODULES = ["metacritic.spiders"]
 NEWSPIDER_MODULE = "metacritic.spiders"
 
+################################
+#       CUSTOM SETTINGS        #
+################################
+SHOULD_STOP = False            # Boolean shared if the crawler should stop
+FIRST_ITEM_PAGE = 0            # First item page     
+MAX_ITEMS_PROCESSED = 600      # Max items that will be processed 
+ITEMS_PARTITION = 100          # Number of items per partition
+HTTPERROR_ALLOWED_CODES = [404]# List of allowed HTTP error codes
+################################
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = "RIWS-MUEI-FIC-UDC Scrappy Bot - Course Assignment"
@@ -21,20 +30,20 @@ USER_AGENT = "RIWS-MUEI-FIC-UDC Scrappy Bot - Course Assignment"
 ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 2
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-#DOWNLOAD_DELAY = 3
+# DOWNLOAD_DELAY = 3 # Not configured because autothrottle is enabled
 # The download delay setting will honor only one of:
-#CONCURRENT_REQUESTS_PER_DOMAIN = 16
-#CONCURRENT_REQUESTS_PER_IP = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 2
+CONCURRENT_REQUESTS_PER_IP = 2
 
 #DEPTH_LIMIT = 10
 
 # Disable cookies (enabled by default)
-COOKIES_ENABLED = False
+#COOKIES_ENABLED = True
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -71,14 +80,14 @@ COOKIES_ENABLED = False
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
-#AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-#AUTOTHROTTLE_START_DELAY = 5
+AUTOTHROTTLE_START_DELAY = 3
 # The maximum download delay to be set in case of high latencies
-#AUTOTHROTTLE_MAX_DELAY = 60
+AUTOTHROTTLE_MAX_DELAY = 6
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
-#AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
+AUTOTHROTTLE_TARGET_CONCURRENCY = 2.0
 # Enable showing throttling stats for every response received:
 #AUTOTHROTTLE_DEBUG = False
 
@@ -104,3 +113,13 @@ ELASTICSEARCH = {
     'index_name': 'metacritic',
     'delete_index': True  # Set to True if you want to delete the existing index
 }
+
+DOWNLOADER_MIDDLEWARES = {
+    # Random user agents
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'metacritic.middlewares.UserAgentMiddleware': 120000,
+}
+
+USER_AGENTS_LIST = 'user-agents/user-agent-list.txt'
+
+CHARSET_DETECTION_OVERRIDE = 'utf-8'

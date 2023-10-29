@@ -244,7 +244,7 @@ def get_platforms():
         "size": 0,
         "aggs": {}
     }  
-    query["aggs"] = {"unique_platforms": {"terms": {"field": 'platforms'}}}
+    query["aggs"] = {"unique_platforms": {"terms": {"field": 'platforms', "order": { "_key": "asc" }}}}
         
     response = es.search(index=INDEX, body=query)
 

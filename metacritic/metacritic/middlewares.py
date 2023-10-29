@@ -3,7 +3,11 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+import random
 from scrapy import signals
+from scrapy.utils.project import get_project_settings
+from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -101,3 +105,22 @@ class MetacriticDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+# User agent middleware
+class UserAgentMiddleware:
+    def __init__(self):
+        self.user_agents = self.load_user_agents()
+
+    def load_user_agents(self):
+        settings = get_project_settings()
+        user_agents_file = settings.get('USER_AGENTS_LIST')
+        try:
+            with open(user_agents_file, 'r') as f:
+                return [line.strip() for line in f if line.strip()]
+        except FileNotFoundError:
+            raise Exception(f"User agent file not found: {user_agents_file}")
+
+    def process_request(self, request, spider):
+        if self.user_agents:
+            request.headers['User-Agent'] = random.choice(self.user_agents)
+            spider.logger.info('Using random user-agent: %s', request.headers['User-Agent'])

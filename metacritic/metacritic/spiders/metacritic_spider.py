@@ -1,9 +1,11 @@
 from pathlib import Path
+from anyio import sleep
 import scrapy
 import re
 from metacritic.items import MetacriticItem
 from datetime import datetime
 from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
 import jsbeautifier
 import json
@@ -16,7 +18,13 @@ class MetacriticSpiderSpider(scrapy.Spider):
     data_dir = "data"
     image_path = "https://www.metacritic.com/a/img/catalog"
     video_path = "https://cdn.jwplayer.com/manifests/"
-
+    sitemap_urls = [
+        'http://metacritic.com/games.xml'
+    ]
+    urls = []
+    current_url = None
+    extracting = False
+    data_extracted = False
 
     # Transforms the string to lowercase and then removes special characters, leaving only letters, numbers and spaces.
     def normalize_string(self, input_string):    
@@ -24,18 +32,74 @@ class MetacriticSpiderSpider(scrapy.Spider):
     
     def start_requests(self):
         if not any(Path(self.data_dir).iterdir()):
-            self.start_urls.append("https://www.metacritic.com/game/the-elder-scrolls-v-skyrim/")
-            self.start_urls.append("https://www.metacritic.com/game/cyberpunk-2077-phantom-liberty/")
-            self.start_urls.append("https://www.metacritic.com/game/payday-3/") 
-            self.start_urls.append("https://www.metacritic.com/game/super-mario-bros-wonder/")
-            self.start_urls.append("https://www.metacritic.com/game/elden-ring/")
-            self.start_urls.append("https://www.metacritic.com/game/stalker-2-heart-of-chernobyl/")
-            for url in self.start_urls:
-                yield scrapy.Request(url, callback=self.parse)
+            try:
+                for sitemap_url in self.sitemap_urls:
+                    yield scrapy.Request(sitemap_url, callback=self.get_start_urls)
+            except:
+                self.logger.error("Crawling not started!")
+                return None
         else:
-            self.logger.info("Crawling not started because data partitions exist!")
+            self.logger.info("Crawling not started because data partitions exist! Preparing for loading data from data partitions...")
 
-    def parse(self, response):
+    async def get_start_urls(self, response): 
+        first_item_page = self.settings.getint('FIRST_ITEM_PAGE', 0)
+        for url in self.get_loc_label(response):
+            if url[-3:] == "xml":
+                match = re.search(r'/(\d+)\.xml', url)
+                if match:
+                    number = int(match.group(1))
+                    if number >= first_item_page:
+                        self.start_urls.append(url)
+                        
+        while (len(self.start_urls) > 0):
+            if not self.extracting:
+                self.extracting = True
+                try:
+                    self.current_url = self.start_urls.pop(0)
+                    yield response.follow(self.current_url, callback=self.parse_sitemap)
+                except:
+                    self.extracting = False
+            # Sleep for 1 second to process the next request in order.
+            await sleep(1)
+
+    def get_loc_label(self, response):
+        # Parse the XML with BeautifulSoup
+        soup = BeautifulSoup(response.body, 'xml')
+
+        # Find all labels <loc> inside the labels <sitemap>
+        loc_tags = soup.find_all('loc')
+
+        urls = [loc.text for loc in loc_tags]
+        return urls
+
+    def handle_httpstatus(self, response):
+        if response.status == 404:
+            if self.data_extracted:
+                self.data_extracted = False
+            else:
+                self.extracting = False
+            # Handle 404 response here if needed
+    
+    async def parse_sitemap(self, response):
+        try:
+            #for url in self.get_loc_label(response):
+            self.urls = self.get_loc_label(response)
+            while (len(self.urls) > 0):
+            # Create a request to fetch the next URL
+                if not self.data_extracted:
+                    self.data_extracted = True
+                    try:
+                        yield scrapy.Request(self.urls.pop(0), callback=self.parse_data)
+                    except:
+                        self.data_extracted = True 
+                await sleep(1)
+            self.extracting = False
+        except Exception as e:
+            self.logger.error("Item not crawled!")
+            self.logger.error(e) 
+            return
+
+    def parse_data(self, response):
         item = MetacriticItem()
         ## GENERAL ITEMS
         # Product title
@@ -57,7 +121,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
 
         # Critics average score
         metascore = response.css('.c-productScoreInfo_scoreNumber span::text').get()
-        item['metascore'] = (metascore.strip() if metascore else 0)
+        item['metascore'] = (metascore.strip() if (metascore and str(metascore) != 'tbd') else 0)
 
         # Critic reviews count
         critic_reviews_count_text = response.css('.c-productScoreInfo_reviewsTotal a span::text').get()
@@ -75,7 +139,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             user_score = (user_score.strip() if user_score else 0)
         except:
             user_score = None
-        item['user_score'] = (0 if user_score.lower() == 'tbd' and user_score != None else user_score)
+        item['user_score'] = (0 if str(user_score).lower() == 'tbd' and user_score else user_score)
 
         # User reviews count
         user_reviews_count_text = response.css('.c-productScoreInfo_reviewsTotal a span::text')
@@ -128,7 +192,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
         beautified_code = jsbeautifier.beautify(script_content)
         start_pos = beautified_code.find(start_index)
         end_pos = beautified_code.find(end_index)
-        self.logger.debug('Finding API script... in ' + response.url)
+        # self.logger.debug('Finding API script... in ' + response.url)
         if start_pos != -1 and end_pos != -1:
             result = beautified_code[start_pos + len(start_index):end_pos].strip()
             start_pos_2 = result.find(start_index_2)
@@ -137,8 +201,8 @@ class MetacriticSpiderSpider(scrapy.Spider):
             result = result.replace("\\u002F", "/").replace('",', '')
             return response.follow(result, callback=self.parse_api, cb_kwargs={'item': item})
         else:
-            self.logger.debug('Nothing found')
-            item['images'] = None
+            self.logger.debug('Nothing found in ' + response.url)
+            item['images'] = []
             item['video'] = None
             item['video_type'] = None
             item['sentiment'] = None
@@ -148,17 +212,19 @@ class MetacriticSpiderSpider(scrapy.Spider):
             item['platforms'] = None
             item['rating'] = None
             item['official_site'] = None
+            self.data_extracted = False
             return item
 
     def parse_api(self, response, item):
         data = json.loads(response.text)
         formatted_json = json.dumps(data, indent=4)
-        img = data["data"]["item"]["images"][1]["bucketPath"]
-        img_poster = data["data"]["item"]["images"][0]["bucketPath"]
-        img_ext = "jpg"
         images = []
-        images.append(self.image_path + img)
-        images.append(self.image_path + img_poster)
+        if len(data["data"]["item"]["images"]) > 0:
+            img = data["data"]["item"]["images"][1]["bucketPath"]
+            img_poster = data["data"]["item"]["images"][0]["bucketPath"]
+            images.append(self.image_path + img)
+            images.append(self.image_path + img_poster)
+       
         item['images'] = images
         video = ""
         video_type = "application/x-mpegURL"
@@ -184,7 +250,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
         item['rating'] = (None if data["data"]["item"]["rating"] == "null" else data["data"]["item"]["rating"])
 
         if "officialSite" in data["data"]["item"]["production"]:
-            item['official_site'] = (None if data["data"]["item"]["production"]["officialSite"] else data["data"]["item"]["production"]["officialSite"])
+            item['official_site'] = (None if data["data"]["item"]["production"]["officialSite"] == "null" else data["data"]["item"]["production"]["officialSite"])
         elif "officialSiteUrl" in data["data"]["item"]["production"]:
             item['official_site'] = (None if data["data"]["item"]["production"]["officialSiteUrl"] == "null" else data["data"]["item"]["production"]["officialSiteUrl"])
 
@@ -198,9 +264,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             item['video'] = self.video_path + video
             item['video_type'] = video_type
         else:
-            self.logger.debug('Nothing found')
-            item['images'] = None
             item['video'] = None
             item['video_type'] = None
-
+        self.data_extracted = False
         return item

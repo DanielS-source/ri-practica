@@ -4,3 +4,4 @@
 */.vscode/
 .vscode/
 metacritic/metacritic/data/data-part-*.json
+metacritic/metacritic/data/result.csv

@@ -1,58 +1,81 @@
 <div>
     <div class="min-h-screen flex">
         <!-- Search section -->
-        <div class="w-1/5 p-4 flex-col">
-            <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex-col">
-                <mat-form-field class="example-full-width">
-                    <input matInput placeholder="Search" formControlName="title">
-                </mat-form-field>
-        
-                <mat-form-field>
-                    <mat-label>Genres</mat-label>
-                    <mat-select [formControlName]="'genres'" multiple>
-                        <mat-select-trigger>
-                          {{ form.get('genres')?.value?.[0] || '' }}
-                          <span *ngIf="(form.get('genres')?.value?.length || 0) > 1" class="example-additional-selection">
-                            (+{{ (form.get('genres')?.value?.length || 0) - 1 }} {{ form.get('genres')?.value?.length === 2 ? 'other' : 'others' }})
-                          </span>
-                        </mat-select-trigger>
-                        <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
-                      </mat-select>              
-                </mat-form-field>
-        
-                <mat-form-field>
-                    <input matInput [matDatepicker]="startDate" placeholder="Start date" formControlName="start_date">
-                    <mat-datepicker-toggle matSuffix [for]="startDate"></mat-datepicker-toggle>
-                    <mat-datepicker #startDate></mat-datepicker>
-                </mat-form-field>
-        
-                <mat-form-field>
-                    <input matInput [matDatepicker]="endDate" placeholder="End date" formControlName="end_date">
-                    <mat-datepicker-toggle matSuffix [for]="endDate"></mat-datepicker-toggle>
-                    <mat-datepicker #endDate></mat-datepicker>
-                </mat-form-field>
-        
-                <div class="flex flex-col">
-                    <label>User votes</label>
-                    <mat-slider min="0" [max]="maxUserVotes" discrete>
-                        <input value="10" matSliderStartThumb matInput formControlName="user_reviews_min">
-                        <input value="50" matSliderEndThumb matInput formControlName="user_reviews_max">
-                    </mat-slider>
+        <div class="w-1/5 p-4 flex-col bg-p_contrast">
+            <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex flex-col h-full">
+                <div>
+                    <mat-form-field class="w-full">
+                        <input matInput placeholder="Search" formControlName="title">
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full">
+                        <mat-label>Genres</mat-label>
+                        <mat-select [formControlName]="'genres'" multiple class="w-full">
+                            <mat-select-trigger>
+                              {{ form.get('genres')?.value?.[0] || '' }}
+                              <span *ngIf="(form.get('genres')?.value?.length || 0) > 1" class="example-additional-selection">
+                                (+{{ (form.get('genres')?.value?.length || 0) - 1 }} {{ form.get('genres')?.value?.length === 2 ? 'other' : 'others' }})
+                              </span>
+                            </mat-select-trigger>
+                            <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
+                          </mat-select>              
+                    </mat-form-field>
+            
+                    <mat-form-field class="w-full">
+                        <input matInput [matDatepicker]="startDate" placeholder="Start date" formControlName="start_date">
+                        <mat-datepicker-toggle matSuffix [for]="startDate"></mat-datepicker-toggle>
+                        <mat-datepicker #startDate></mat-datepicker>
+                    </mat-form-field>
+            
+                    <mat-form-field class="w-full">
+                        <input matInput [matDatepicker]="endDate" placeholder="End date" formControlName="end_date">
+                        <mat-datepicker-toggle matSuffix [for]="endDate"></mat-datepicker-toggle>
+                        <mat-datepicker #endDate></mat-datepicker>
+                    </mat-form-field>
+
+                    <div class="flex flex-col">
+                        <label class="m-auto font-bold">User Score</label>
+                        <mat-slider min="0" max="10" discrete>
+                            <input matSliderStartThumb matInput formControlName="user_score_min">
+                            <input matSliderEndThumb matInput formControlName="user_score_max">
+                        </mat-slider>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="m-auto font-bold">Critic Score</label>
+                        <mat-slider min="0" max="100" discrete>
+                            <input matSliderStartThumb matInput formControlName="critic_score_min">
+                            <input matSliderEndThumb matInput formControlName="critic_score_max">
+                        </mat-slider>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="m-auto font-bold">User votes</label>
+                        <mat-slider min="0" [max]="maxUserVotes" discrete>
+                            <input matSliderStartThumb matInput formControlName="user_reviews_min">
+                            <input matSliderEndThumb matInput formControlName="user_reviews_max">
+                        </mat-slider>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="m-auto font-bold">Critic votes</label>
+                        <mat-slider min="0" [max]="maxCriticVotes" discrete>
+                            <input matSliderStartThumb matInput formControlName="critic_reviews_min">
+                            <input matSliderEndThumb matInput formControlName="critic_reviews_max">
+                        </mat-slider>
+                    </div>
                 </div>
-        
-                <div class="flex flex-col">
-                    <label>Critic votes</label>
-                    <mat-slider min="0" [max]="maxCriticVotes" discrete>
-                        <input value="10" matSliderStartThumb matInput formControlName="critic_reviews_min">
-                        <input value="50" matSliderEndThumb matInput formControlName="critic_reviews_max">
-                    </mat-slider>
+                
+                <div class="flex flex-col mx-auto mt-4 mb-4">
+                    <button mat-fab extended color="primary" (click)="submitForm()">
+                        <mat-icon>search</mat-icon>
+                        Search
+                    </button>
                 </div>
-        
-                <button (click)="submitForm()">Submit</button>
             </form>
         </div>
         <!-- Results section -->
-        <div class="w-4/5 p-4">
+        <div class="w-4/5 bg-primary">
             <app-list [items]="items"></app-list>
         </div>
     </div>

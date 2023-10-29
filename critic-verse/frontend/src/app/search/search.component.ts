@@ -31,10 +31,14 @@ export class SearchComponent implements OnInit, OnDestroy  {
       genres: new FormControl([]),
       start_date: null,
       end_date: null,
+      user_score_min: 0,
+      user_score_max: 10,
+      critic_score_min: 0,
+      critic_score_max: 100,
       user_reviews_min: 0,
       user_reviews_max: 0,
       critic_reviews_min: 0,
-      critic_reviews_max: 0
+      critic_reviews_max: 0,
     });
   }
 

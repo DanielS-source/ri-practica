@@ -35,6 +35,17 @@ services:
       - elasticsearch
     networks:
       - esnet
+  angular-frontend:
+    build:
+      context: ./critic-verse/frontend
+      dockerfile: Dockerfile-angular
+    container_name: angular-frontend
+    restart: unless-stopped
+    ports:
+      - 4200:4200
+    networks:
+      - esnet
+
 volumes:
   esdata:
     driver: local

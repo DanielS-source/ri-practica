@@ -2,25 +2,25 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 
 @Component({
-  selector: 'app-list',
-  templateUrl: './list.component.html'
+    selector: 'app-list',
+    templateUrl: './list.component.html'
 })
 export class ListComponent {
 
-  @Input() items: any[] = [];
+    @Input() items: any[] = [];
 
-  @ViewChild('drawer') sidenav!: MatSidenav;
+    @ViewChild('drawer') sidenav!: MatSidenav;
 
-  selectedItem: any;
+    selectedItem: any;
 
-  setItem(item: any): void {
-    this.selectedItem = item;
-    this.sidenav.open();
-  }
+    setItem(item: any): void {
+        this.selectedItem = item;
+        this.sidenav.open();
+    }
 
-  closeDrawer(): void {
-    console.log('hi')
-    this.sidenav.close();
-  }
- 
+    closeDrawer(): void {
+        console.log('hi')
+        this.sidenav.close();
+    }
+
 }

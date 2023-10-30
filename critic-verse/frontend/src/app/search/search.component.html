@@ -2,7 +2,7 @@
     <div class="min-h-screen flex">
         <!-- Search section -->
         <div class="w-1/5 p-4 flex-col bg-p_contrast">
-            <form [formGroup]="form" (ngSubmit)="submitForm()" class="flex flex-col h-full">
+            <form [formGroup]="form" class="flex flex-col h-full">
                 <div>
                     <mat-form-field class="w-full">
                         <input matInput placeholder="Search" formControlName="title">
@@ -12,21 +12,40 @@
                         <mat-label>Genres</mat-label>
                         <mat-select [formControlName]="'genres'" multiple class="w-full">
                             <mat-select-trigger>
-                              {{ form.get('genres')?.value?.[0] || '' }}
-                              <span *ngIf="(form.get('genres')?.value?.length || 0) > 1" class="example-additional-selection">
-                                (+{{ (form.get('genres')?.value?.length || 0) - 1 }} {{ form.get('genres')?.value?.length === 2 ? 'other' : 'others' }})
-                              </span>
+                                {{ form.get('genres')?.value?.[0] || '' }}
+                                <span *ngIf="(form.get('genres')?.value?.length || 0) > 1"
+                                    class="example-additional-selection">
+                                    (+{{ (form.get('genres')?.value?.length || 0) - 1 }} {{
+                                    form.get('genres')?.value?.length === 2 ? 'other' : 'others' }})
+                                </span>
                             </mat-select-trigger>
                             <mat-option *ngFor="let genre of genres" [value]="genre">{{ genre }}</mat-option>
-                          </mat-select>              
+                        </mat-select>
                     </mat-form-field>
-            
+
                     <mat-form-field class="w-full">
-                        <input matInput [matDatepicker]="startDate" placeholder="Start date" formControlName="start_date">
+                        <mat-label>Platforms</mat-label>
+                        <mat-select [formControlName]="'platforms'" multiple class="w-full">
+                            <mat-select-trigger>
+                                {{ form.get('platforms')?.value?.[0] || '' }}
+                                <span *ngIf="(form.get('platforms')?.value?.length || 0) > 1"
+                                    class="example-additional-selection">
+                                    (+{{ (form.get('platforms')?.value?.length || 0) - 1 }} {{
+                                    form.get('platforms')?.value?.length === 2 ? 'other' : 'others' }})
+                                </span>
+                            </mat-select-trigger>
+                            <mat-option *ngFor="let platform of platforms" [value]="platform">{{ platform
+                                }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full">
+                        <input matInput [matDatepicker]="startDate" placeholder="Start date"
+                            formControlName="start_date">
                         <mat-datepicker-toggle matSuffix [for]="startDate"></mat-datepicker-toggle>
                         <mat-datepicker #startDate></mat-datepicker>
                     </mat-form-field>
-            
+
                     <mat-form-field class="w-full">
                         <input matInput [matDatepicker]="endDate" placeholder="End date" formControlName="end_date">
                         <mat-datepicker-toggle matSuffix [for]="endDate"></mat-datepicker-toggle>
@@ -65,7 +84,7 @@
                         </mat-slider>
                     </div>
                 </div>
-                
+
                 <div class="flex flex-col mx-auto mt-4 mb-4">
                     <button mat-fab extended color="primary" (click)="submitForm()">
                         <mat-icon>search</mat-icon>

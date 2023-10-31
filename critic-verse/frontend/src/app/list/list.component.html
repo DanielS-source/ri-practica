@@ -5,11 +5,11 @@
     <mat-drawer-content>
         <div class="m-4 grid grid-cols-4 gap-4">
             <div *ngFor="let item of items"
-                class="relative flex w-full max-w-[26rem] flex-col rounded-xl bg-gray-400 bg-clip-border text-gray-700 shadow-lg">
+                class="relative flex w-full max-w-[26rem] flex-col rounded-xl bg-p_contrast bg-clip-border text-gray-700 shadow-lg">
                 <div
-                    class="z-0 relative mx-4 mt-4 overflow-hidden rounded-xl bg-blue-gray-500 bg-clip-border text-white shadow-lg shadow-blue-gray-500/40">
-                    <div class="h-[320px] flex items-center justify-center bg-p_contrast">
-                        <img src="{{item.images[1]}}" alt="ui/ux review check" class="object-cover" />
+                    class="z-0 relative mx-4 mt-4 overflow-hidden rounded-xl bg-gray-500 bg-clip-border shadow-lg shadow-gray-500/40">
+                    <div class="h-[330px] flex items-center justify-center bg-primary">
+                        <img src="{{item.images[0]}}" alt="ui/ux review check" class="object-cover" />
                     </div>
                     <div
                         class="to-bg-black-10 absolute inset-0 h-full w-full bg-gradient-to-tr from-transparent via-transparent to-black/60">
@@ -77,14 +77,14 @@
                         </button>
                     </div>
                     <!--
-                        
+
                         <div>
                             <p
                                 class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
                                 Platforms : <strong *ngFor="let platform of item.platforms">{{platform}}</strong>
                             </p>
                         </div>
-                        
+
                         <div>
                             <p
                                 class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
@@ -114,7 +114,7 @@
                                     clip-rule="evenodd"></path>
                             </svg>
                         </span>
-            
+
                         <span data-tooltip-target="bedrooms"
                             class="cursor-pointer rounded-full border border-pink-500/5 bg-pink-500/5 p-3 text-pink-500 transition-colors hover:border-pink-500/10 hover:bg-pink-500/10 hover:!opacity-100 group-hover:opacity-70">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
@@ -127,7 +127,7 @@
                                 </path>
                             </svg>
                         </span>
-            
+
                         <span data-tooltip-target="tv"
                             class="cursor-pointer rounded-full border border-pink-500/5 bg-pink-500/5 p-3 text-pink-500 transition-colors hover:border-pink-500/10 hover:bg-pink-500/10 hover:!opacity-100 group-hover:opacity-70">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
@@ -151,7 +151,7 @@
                             class="cursor-pointer rounded-full border border-pink-500/5 bg-pink-500/5 p-3 text-pink-500 transition-colors hover:border-pink-500/10 hover:bg-pink-500/10 hover:!opacity-100 group-hover:opacity-70">
                             +20
                         </span>
-            
+
                     </div>
                     -->
                 </div>

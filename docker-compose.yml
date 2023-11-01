@@ -47,6 +47,15 @@ services:
       - "4200"
     networks:
       - esnet
+  elastic-setup:
+    build:
+      context: ./init_data
+      dockerfile: Dockerfile
+    container_name: elastic-setup
+    depends_on:
+      - elasticsearch
+    networks:
+      - esnet
 
 volumes:
   esdata:

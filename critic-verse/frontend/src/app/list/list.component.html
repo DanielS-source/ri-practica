@@ -1,15 +1,16 @@
 <mat-drawer-container hasBackdrop="false" class="h-full">
-    <mat-drawer #drawer position="end" mode="over">
+    <mat-drawer #drawer position="end" mode="over" style="height: auto !important; position: fixed !important;">
         <app-details [item]="selectedItem" (closeDrawerEvent)="closeDrawer()"></app-details>
     </mat-drawer>
     <mat-drawer-content>
+        <div id="list-information" class="h-6 pl-5 z-0 items-center justify-center bg-primary relative mx-4 mt-4 overflow-hidden rounded-xl bg-gray-500 bg-clip-border shadow-lg shadow-gray-500/40 text-gray-700 font-bold">About {{count}} results ({{time}} seconds)</div>
         <div class="m-4 grid grid-cols-4 gap-4">
             <div *ngFor="let item of items"
                 class="relative flex w-full max-w-[26rem] flex-col rounded-xl bg-p_contrast bg-clip-border text-gray-700 shadow-lg">
                 <div
                     class="z-0 relative mx-4 mt-4 overflow-hidden rounded-xl bg-gray-500 bg-clip-border shadow-lg shadow-gray-500/40">
                     <div class="h-[330px] flex items-center justify-center bg-primary">
-                        <img src="{{item.images[0]}}" alt="ui/ux review check" class="object-cover" />
+                        <img src="{{item.images[0]}}" onerror="this.src='assets/not_found.jpg'" alt="ui/ux review check" class="object-cover" />
                     </div>
                     <div
                         class="to-bg-black-10 absolute inset-0 h-full w-full bg-gradient-to-tr from-transparent via-transparent to-black/60">
@@ -156,6 +157,18 @@
                     -->
                 </div>
             </div>
+        </div>
+        <!-- Pagination -->
+        <div class="h-6 pl-5 z-0 grid grid-cols-3 justify-center bg-primary relative mx-4 mt-4 mb-4 overflow-hidden rounded-xl bg-gray-500 bg-clip-border shadow-lg shadow-gray-500/40 text-gray-700">
+            <button [disabled]="previousBtn" class="btn btn-primary border-r border-gray-500 border-solid" (click)="previousPage()" data-toggle="collapse" alt="Previous page" title="Previous page">
+                <mat-icon *ngIf="!previousBtn">keyboard_arrow_left</mat-icon>
+                <mat-icon *ngIf="previousBtn" class="opacity-50">keyboard_arrow_left</mat-icon>
+            </button>
+            <p class="w-full text-center">Page: <b>{{page}}</b></p>
+            <button [disabled]="nextBtn" class="btn btn-primary border-l border-gray-500 border-solid" (click)="nextPage()" data-toggle="collapse" alt="Next page" title="Next page">
+                <mat-icon *ngIf="!nextBtn">keyboard_arrow_right</mat-icon>
+                <mat-icon *ngIf="nextBtn" class="opacity-50">keyboard_arrow_right</mat-icon>
+            </button>
         </div>
     </mat-drawer-content>
 </mat-drawer-container>

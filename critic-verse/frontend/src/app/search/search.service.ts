@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { GameItem, GameQuery } from './search.model';
+import { GameItem, GameQuery, SearchItem } from './search.model';
 
 @Injectable({
     providedIn: 'root'
@@ -16,10 +16,19 @@ export class SearchService {
 
     constructor(private _httpClient: HttpClient) { }
 
-    getAllItems(): Observable<GameItem[]> {
-        return this._httpClient.get<GameItem[]>(`${environment.api}/?size=${environment.pageSize}`, this.httpOptions)
+    getAllItems(): Observable<SearchItem> {
+        return this._httpClient.get<SearchItem[]>(`${environment.api}/?size=${environment.pageSize}`, this.httpOptions)
             .pipe(
-                map((response: any) => response.hits.map((hit: { _source: any; }) => hit._source))
+                map((response: any) => {
+                    return {
+                      time: response.time,
+                      size: response.size,
+                      n_pages: response.n_pages,
+                      page: response.page,
+                      n_hits: response.n_hits,
+                      items: response.hits.map((hit: { _source: any; }) => hit._source)
+                    };
+                })
             );
     }
 

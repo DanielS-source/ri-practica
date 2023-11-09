@@ -1,5 +1,14 @@
 import { environment } from "src/environments/environment";
 
+export type SearchItem = {
+    time: number;
+    size: number;
+    page: number;
+    n_pages: number;
+    n_hits: number;
+    items: GameItem[];
+};
+
 export type GameItem = {
     title: string;
     title_search: string;

@@ -4,6 +4,9 @@
         <div class="w-1/5 p-4 flex-col bg-p_contrast">
             <form [formGroup]="form" class="flex flex-col h-full">
                 <div>
+                    <div id="logo" class="mb-5">
+                        <mat-label id="critic-verse-logo" class="text-3xl w-full" style="background: -webkit-linear-gradient(left, black, #c2185b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: #c2185b;">CRITIC-VERSE</mat-label>
+                    </div>
                     <mat-form-field class="w-full">
                         <input matInput placeholder="Search" formControlName="title">
                     </mat-form-field>
@@ -86,7 +89,7 @@
                 </div>
 
                 <div class="flex flex-col mx-auto mt-4 mb-4">
-                    <button mat-fab extended color="primary" (click)="submitForm()">
+                    <button mat-fab extended color="primary" (click)="submitForm(0)">
                         <mat-icon>search</mat-icon>
                         Search
                     </button>
@@ -95,7 +98,7 @@
         </div>
         <!-- Results section -->
         <div class="w-4/5 bg-primary">
-            <app-list [items]="items"></app-list>
+            <app-list [items]="items" [time]="time" [count]="count" [page]="page+1" [previousBtn]="previousBtn" [nextBtn]="nextBtn" (callPreviousPage)="previousPage()" (callNextPage)="nextPage()"></app-list>
         </div>
     </div>
 </div>

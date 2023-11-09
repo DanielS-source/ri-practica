@@ -1,4 +1,4 @@
 export const environment = {
-    pageSize: 50,
+    pageSize: 16,
     api: "http://localhost:8000/api/v1"
 };

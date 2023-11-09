@@ -12,7 +12,7 @@ export class InitialPageResolver implements Resolve<any> {
      * Constructor
      */
     constructor(
-        private _searchSerice: SearchService,
+        private _searchService: SearchService,
         private _router: Router) { }
 
     // -----------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ export class InitialPageResolver implements Resolve<any> {
      * @param state
      */
     resolve(route: ActivatedRouteSnapshot): Observable<any> {
-        return this._searchSerice.getAllItems().pipe(
+        return this._searchService.getAllItems().pipe(
             catchError((error) => {
                 console.error(error);
                 // Throw notification

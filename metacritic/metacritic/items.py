@@ -21,6 +21,7 @@ class MetacriticItem(Item):
     release_date = Field()
     images = Field()
     video = Field()
+    video_thumbnail = Field()
     video_type = Field()
     sentiment = Field()
     must_play = Field()
@@ -29,7 +30,6 @@ class MetacriticItem(Item):
     companies = Field()
     platforms = Field()
     rating = Field()
-    official_site = Field()
 
 
 
@@ -50,15 +50,15 @@ class MetacriticItemEncoder(json.JSONEncoder):
                 'release_date': (obj["release_date"] if "release_date" in obj else None), 
                 'images': (obj["images"] if "images" in obj else []), 
                 'video': (obj["video"] if "video" in obj else ""), 
+                'video_thumbnail': (obj["video_thumbnail"] if "video_thumbnail" in obj else ""), 
                 'video_type': (obj["video_type"] if "video_type" in obj else None),
                 'sentiment': (obj["sentiment"] if "sentiment" in obj else None), 
                 'must_play': (obj["must_play"] if "must_play" in obj else None),
-                'crew': (obj["crew"] if "crew" in obj else None),
-                'countries': (obj["countries"] if "country" in obj else []), 
-                'companies': (obj["companies"] if "companies" in obj else None),  
+                'crew': (obj["crew"] if "crew" in obj else []),
+                'countries': (obj["countries"] if "countries" in obj else []), 
+                'companies': (obj["companies"] if "companies" in obj else []),  
                 'platforms': (obj["platforms"] if "platforms" in obj else []),   
-                'rating': (obj["rating"] if "rating" in obj else None), 
-                'official_site': (obj["official_site"] if "official_site" in obj else None) 
+                'rating': (obj["rating"] if "rating" in obj else None)
             }
             return {}
         return super().default(obj)

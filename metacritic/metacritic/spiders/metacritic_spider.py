@@ -10,14 +10,13 @@ from bs4 import BeautifulSoup
 import jsbeautifier
 import json
 
-
 class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
     allowed_domains = ["metacritic.com", "fandom-prod.apigee.net"]
     start_urls = []
     data_dir = "data"
     image_path = "https://www.metacritic.com/a/img/catalog"
-    video_path = "https://cdn.jwplayer.com/manifests/"
+    video_path = "https://cdn.jwplayer.com/v2/media/"
     sitemap_urls = [
         'http://metacritic.com/games.xml'
     ]
@@ -25,19 +24,37 @@ class MetacriticSpiderSpider(scrapy.Spider):
     current_url = None
     extracting = False
     data_extracted = False
+    page = None
+
+    rules = (
+        Rule(
+            LinkExtractor(deny=('.*\.txt', '.*\.png', '.*\.jpg', '.*\.jpeg', '.*\.gif', '.*\.mp4', '.*\.html', '.*\.m3u8')),
+            callback='parse_sitemap',
+            follow=False
+        ),
+    )
 
     # Transforms the string to lowercase and then removes special characters, leaving only letters, numbers and spaces.
-    def normalize_string(self, input_string):    
+    def normalize_string_lower(self, input_string):    
         return re.sub(r'[^a-zA-Z0-9\s]', '', input_string.lower())
+    
+    def normalize_string(self, input_string):
+        data = input_string.strip()
+        if data.startswith('Metacritic'):
+            return None
+        else:
+            data = data.replace(' ?', '').replace('??', '').replace('_', ' ')
+            data = data.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ')
+            data = re.sub(r'(https?://[a-zA-Z0-9.\/]+)', r'<a href="\1" target="_blank">\1</a>', data)
+            return data
     
     def start_requests(self):
         if not any(Path(self.data_dir).iterdir()):
             try:
-                for sitemap_url in self.sitemap_urls:
-                    yield scrapy.Request(sitemap_url, callback=self.get_start_urls)
+                yield scrapy.Request(self.sitemap_urls[0], callback=self.get_start_urls, dont_filter = True)
             except:
                 self.logger.error("Crawling not started!")
-                return None
+                return
         else:
             self.logger.info("Crawling not started because data partitions exist! Preparing for loading data from data partitions...")
 
@@ -59,8 +76,8 @@ class MetacriticSpiderSpider(scrapy.Spider):
                     yield response.follow(self.current_url, callback=self.parse_sitemap)
                 except:
                     self.extracting = False
-            # Sleep for 1 second to process the next request in order.
-            await sleep(1)
+            # Sleep for 0.2 second to process the next request in order.
+            await sleep(0.65)
 
     def get_loc_label(self, response):
         # Parse the XML with BeautifulSoup
@@ -70,6 +87,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
         loc_tags = soup.find_all('loc')
 
         urls = [loc.text for loc in loc_tags]
+
         return urls
 
     def handle_httpstatus(self, response):
@@ -78,7 +96,6 @@ class MetacriticSpiderSpider(scrapy.Spider):
                 self.data_extracted = False
             else:
                 self.extracting = False
-            # Handle 404 response here if needed
     
     async def parse_sitemap(self, response):
         try:
@@ -92,7 +109,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
                         yield scrapy.Request(self.urls.pop(0), callback=self.parse_data)
                     except:
                         self.data_extracted = True 
-                await sleep(1)
+                await sleep(0.65)
             self.extracting = False
         except Exception as e:
             self.logger.error("Item not crawled!")
@@ -105,15 +122,16 @@ class MetacriticSpiderSpider(scrapy.Spider):
         # Product title
         title = response.css('.c-productHero_title div::text').get()
         item['title'] = (title.strip() if title else None)
-        item['title_search'] = (self.normalize_string(title.strip()) if title else None)
-        item['title_keyword'] = (self.normalize_string(title.strip()) if title else None)
+        item['title_search'] = (self.normalize_string_lower(title.strip()) if title else None)
+        item['title_keyword'] = (self.normalize_string_lower(title.strip()) if title else None)
 
         # Metacritic url
         item['url'] = response.url.strip()
 
         # Description of the product
         description = response.css('meta[name="description"]::attr(content)').get()
-        item['summary'] = (description if description else None)
+        
+        item['summary'] = (self.normalize_string(description) if description else None)
            
         # Genres of the product
         genres_list = response.css('.c-genreList_item a.c-globalButton_container span.c-globalButton_label::text').getall()
@@ -153,6 +171,12 @@ class MetacriticSpiderSpider(scrapy.Spider):
         else:
             item['user_reviews'] = 0
 
+        # If meta score is the same as user score, then it means that meta score is using the user score value (Same class in this elements).
+        if metascore == user_score:
+            item['metascore'] = 0
+            item['user_reviews'] = item['critic_reviews']
+            item['critic_reviews'] = 0
+
         ## SPECIFIC ITEMS
         if "/game/" in response.url:
             ### GAMES ONLY
@@ -175,10 +199,9 @@ class MetacriticSpiderSpider(scrapy.Spider):
             if publishers:
                 producers_and_publishers.update([(item.strip() + " (Publisher)") for item in publishers])
             item['companies'] = list(producers_and_publishers)
-
+            
         # Scrap Metacritic API script to get additional information and return the item.
         return self.find_api_script(response, item)
-
 
     # Scrapping Metacritic API
     def find_api_script(self, response, item):
@@ -204,6 +227,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
             self.logger.debug('Nothing found in ' + response.url)
             item['images'] = []
             item['video'] = None
+            item['video_thumbnail'] = None
             item['video_type'] = None
             item['sentiment'] = None
             item['must_play'] = False
@@ -211,7 +235,6 @@ class MetacriticSpiderSpider(scrapy.Spider):
             item['countries'] = None
             item['platforms'] = None
             item['rating'] = None
-            item['official_site'] = None
             self.data_extracted = False
             return item
 
@@ -249,22 +272,50 @@ class MetacriticSpiderSpider(scrapy.Spider):
 
         item['rating'] = (None if data["data"]["item"]["rating"] == "null" else data["data"]["item"]["rating"])
 
-        if "officialSite" in data["data"]["item"]["production"]:
+        # We don't use the api anymore to retrieve videos
+        """if "officialSite" in data["data"]["item"]["production"]:
             item['official_site'] = (None if data["data"]["item"]["production"]["officialSite"] == "null" else data["data"]["item"]["production"]["officialSite"])
         elif "officialSiteUrl" in data["data"]["item"]["production"]:
-            item['official_site'] = (None if data["data"]["item"]["production"]["officialSiteUrl"] == "null" else data["data"]["item"]["production"]["officialSiteUrl"])
+            item['official_site'] = (None if data["data"]["item"]["production"]["officialSiteUrl"] == "null" else data["data"]["item"]["production"]["officialSiteUrl"])"""
 
         if data["data"]["item"]["video"] != None:
             if "url" in data["data"]["item"]["video"]:
-                video = data["data"]["item"]["video"]["url"]
-                video_type = "video/mp4" 
+                item['video'] = data["data"]["item"]["video"]["url"]
+                item["video_thumbnail"] = None
+                item['video_type'] = "video/mp4" 
             else:
                 video = data["data"]["item"]["video"]["videoLinks"][0]["videoLinks"][0]["linkUrl"]
-                video = video + ".m3u8"
-            item['video'] = self.video_path + video
-            item['video_type'] = video_type
+                return response.follow(self.video_path+video, callback=self.get_video_info, cb_kwargs={'item': item}, dont_filter=True)
+            
         else:
             item['video'] = None
+            item['video_thumbnail'] = None
             item['video_type'] = None
+            self.data_extracted = False
+        return item
+
+    
+    # Finally get the video information
+    def get_video_info(self, response, item):
+        video_data = json.loads(response.text)
+        video_title = video_data['title']
+        video_description = video_data['description']
+        if "playlist" not in video_data and "sources" not in video_data:
+            return item
+        video_duration = video_data['playlist'][0]['duration']
+        # Video thumbnails are sorted by default from low quality to high quality
+        video_thumbnails = list(video_data['playlist'][0]['images'])
+
+        if len(video_thumbnails) > 0:
+            item['video_thumbnail'] = video_thumbnails[0]['src'] # Reverse thumbnail list to get the highest quality thumbnail
+        else:
+            item['video_thumbnail'] = video_data['playlist'][0]['image'] # Get default video thumbnail
+
+        video_file = video_data['playlist'][0]['sources'][0]['file']
+        video_type = video_data['playlist'][0]['sources'][0]['type']
+
+        item['video'] = (video_file if video_file else None)
+        item['video_type'] = (video_type if video_type else None)
+        
         self.data_extracted = False
         return item

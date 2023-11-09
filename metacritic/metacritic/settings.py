@@ -17,9 +17,11 @@ NEWSPIDER_MODULE = "metacritic.spiders"
 ################################
 SHOULD_STOP = False            # Boolean shared if the crawler should stop
 FIRST_ITEM_PAGE = 0            # First item page     
-MAX_ITEMS_PROCESSED = 600      # Max items that will be processed 
+MAX_ITEMS_PROCESSED = 500      # Max items that will be processed 
 ITEMS_PARTITION = 100          # Number of items per partition
 HTTPERROR_ALLOWED_CODES = [404]# List of allowed HTTP error codes
+RETRY_HTTP_CODES = [500, 443]  # List of HTTP error codes to retry retrieving info
+RETRY_TIMES = 3                # The amount of retry times
 ################################
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -29,16 +31,19 @@ USER_AGENT = "RIWS-MUEI-FIC-UDC Scrappy Bot - Course Assignment"
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+# Disable duplication exception
+DUPEFILTER_CLASS = 'scrapy.dupefilters.BaseDupeFilter'
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 2
+CONCURRENT_REQUESTS = 8
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 # DOWNLOAD_DELAY = 3 # Not configured because autothrottle is enabled
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 2
-CONCURRENT_REQUESTS_PER_IP = 2
+CONCURRENT_REQUESTS_PER_DOMAIN = 8
+CONCURRENT_REQUESTS_PER_IP = 8
 
 #DEPTH_LIMIT = 10
 

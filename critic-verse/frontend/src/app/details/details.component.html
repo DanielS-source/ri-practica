@@ -51,10 +51,10 @@
         </div>
         <div id="card-info" class="mt-2 pt-2 pl-5 pr-5 pb-5 overflow-hidden">
             <div class="text-center justify-center w-[50vw] items-center flex flex-col">
-                <div *ngIf="(videoSource.length > 0 && !show_credits)" id="game-preview" class="justify-center items-center text-center mt-2 w-[50vw] m-auto">
+                <div *ngIf="(videoSource.length > 0 && !show_credits)" id="game-preview" class="justify-center items-center text-center mt-2 w-[50vw]">
                     <app-vjs [options]="{autoplay: true, controls: true, fluid: true, sources: [{}]}" [source]="videoSource" [thumbnail]="thumbnail" [type]="videoType"></app-vjs>
                 </div>
-                <fieldset *ngIf="(crew.length > 0 && show_credits)" id="card-crew" class="text-center w-[35vw] h-auto p-2 text-ellipsis overflow-hidden" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 800px;">
+                <fieldset *ngIf="(crew.length > 0 && show_credits)" id="card-crew" class="text-center w-[48vw] ml-[-2vw] h-auto p-2 text-ellipsis overflow-hidden" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 800px;">
                     <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Credits</legend>
                     <p id="game-crew" class="text-sm" [innerHTML]="crew"></p> 
                 </fieldset>

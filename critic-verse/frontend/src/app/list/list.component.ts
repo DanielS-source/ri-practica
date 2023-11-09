@@ -35,7 +35,6 @@ export class ListComponent {
     }
 
     closeDrawer(): void {
-        console.log('hi')
         this.sidenav.close();
     }
 

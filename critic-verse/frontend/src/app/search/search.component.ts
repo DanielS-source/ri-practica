@@ -71,13 +71,11 @@ export class SearchComponent implements OnInit, OnDestroy {
     }
 
     previousPage() {
-        console.log("previousPage");
         this.page -= 1;
         this.submitForm(this.page);
     }
 
     nextPage() {
-        console.log("nextPage " + this.page);
         this.page += 1;
         this.submitForm(this.page);
     }

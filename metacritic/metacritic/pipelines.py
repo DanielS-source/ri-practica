@@ -8,6 +8,7 @@
 import json
 import os
 import time
+from anyio import sleep
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from metacritic.items import MetacriticItemEncoder
@@ -183,7 +184,9 @@ class ElasticsearchPipeline:
                     with open(file_path, 'r') as f:
                         items = json.load(f)
                         for item in items:
-                            self.es.index(index=self.index_name, body=item)
+                            item_data = json.loads(item)
+                            if not self.item_exists_by_attribute('url', item_data['url']):
+                                self.es.index(index=self.index_name, body=item)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)
                 except Exception as e:

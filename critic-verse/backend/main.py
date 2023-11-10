@@ -123,10 +123,10 @@ def multisearch(
         platforms = item.platform.split(", ")
         for p in platforms:
             query["query"]["bool"]["must"].append({"match": {"platforms": p}})
+
     if(item.country != None):
-        countries = item.country.split(", ")
-        for c in countries:
-            query["query"]["bool"]["must"].append({"match": {"countries": c}})
+        query["query"]["bool"]["should"].append({"match": {"countries": item.country}})
+
     if(item.metascore_min != None):
         if(item.metascore_max != None and int(item.metascore_max) >= int(item.metascore_min)):
             query["query"]["bool"]["must"].append({"range": { "metascore": {

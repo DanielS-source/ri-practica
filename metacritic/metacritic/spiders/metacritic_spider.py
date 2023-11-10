@@ -76,7 +76,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
                     yield response.follow(self.current_url, callback=self.parse_sitemap)
                 except:
                     self.extracting = False
-            # Sleep for 0.2 second to process the next request in order.
+            # Sleep for 0.65 second to process the next request in order.
             await sleep(0.65)
 
     def get_loc_label(self, response):
@@ -109,6 +109,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
                         yield scrapy.Request(self.urls.pop(0), callback=self.parse_data)
                     except:
                         self.data_extracted = True 
+                # Sleep for 0.65 second to process the next request in order.
                 await sleep(0.65)
             self.extracting = False
         except Exception as e:

@@ -25,6 +25,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { ListComponent } from './list/list.component';
 import { PlatformListResolver } from './search/resolvers/platforms.resolver';
 import { VjsComponent } from './details/vjs/vjs.component';
+import { IpDataResolver } from './search/resolvers/ip-data.resolver';
 
 const routes: Routes = [
     {
@@ -36,10 +37,15 @@ const routes: Routes = [
             platforms: PlatformListResolver,
             maxCriticVotes: MaxCriticVotesResolver,
             maxUserVotes: MaxUserVotesResolver,
+            ipData: IpDataResolver
         },
         data: { title: "Search" }
     },
-    { path: "", redirectTo: "/search", pathMatch: "full" }
+    {
+        path: '',
+        redirectTo: 'search',
+        pathMatch: 'full',
+    }
 ];
 
 @NgModule({

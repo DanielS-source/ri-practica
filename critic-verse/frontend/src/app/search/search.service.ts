@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { GameItem, GameQuery, SearchItem } from './search.model';
+import { GameItem, GameQuery, IPData, SearchItem } from './search.model';
 
 @Injectable({
     providedIn: 'root'
@@ -70,5 +70,65 @@ export class SearchService {
 
     searchItems(query: GameQuery): Observable<any> {
         return this._httpClient.post<any>(`${environment.api}/search`, query, this.httpOptions);
+    }
+
+    getContinent(): Observable<IPData> {
+        return this._httpClient.get<IPData>(`${environment.ipApi}`, this.httpOptions)
+            .pipe(
+                map((response: any) => {
+                    return {
+                        ip: response.ip,
+                        network: response.network,
+                        version: response.version,
+                        city: response.city,
+                        region: response.region,
+                        regionCode: response.region_code,
+                        country: response.country,
+                        countryName: response.country_name,
+                        countryCode: response.country_code,
+                        countryCodeIso: response.country_code_iso3,
+                        countryCapital: response.country_capital,
+                        countryTld: response.country_tld,
+                        continentName: this.parseContinentCode(response.continent_code),
+                        continentCode: response.continent_code,
+                        inEU: response.in_eu,
+                        postalCode: response.postal,
+                        geolocation: {
+                            latitude: response.latitude,
+                            longitude: response.longitude
+                        },
+                        timeZone: response.timezone,
+                        utcOffset: response.utc_offset,
+                        countryCallingCode: response.country_calling_code,
+                        currency: response.currency,
+                        currencyName: response.currency_name,
+                        languages: response.languages.split(","),
+                        countryArea: response.country_area,
+                        countryPopulation: response.country_population,
+                        asn: response.asn,
+                        org: response.org
+                    };
+                })
+            );
+    }
+
+    parseContinentCode(cCode: string): string {
+        switch (cCode) {
+            default:
+            case 'EU':
+                return "Europe";
+            case 'NA':
+                return "North America";
+            case 'AN':
+                return "Antarctica";
+            case 'OC':
+                return "Oceania";
+            case 'SA':
+                return "South America"; 
+            case 'AF':
+                return "Africa";
+            case 'AS':
+                return "Asia";
+        }
     }
 }

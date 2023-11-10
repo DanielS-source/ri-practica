@@ -4,7 +4,7 @@ import { MatDrawer } from '@angular/material/sidenav';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { SearchService } from './search.service';
-import { GameItem, GameQuery } from './search.model';
+import { GameItem, GameQuery, IPData } from './search.model';
 
 @Component({
     selector: 'app-search',
@@ -25,6 +25,7 @@ export class SearchComponent implements OnInit, OnDestroy {
     card_image: string[] = [];
     previousBtn: boolean = true;
     nextBtn: boolean = false;
+    ipData!: IPData;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -59,6 +60,7 @@ export class SearchComponent implements OnInit, OnDestroy {
             this.genres = resolve.genres;
             this.platforms = resolve.platforms;
             this.items = resolve.items["items"];
+            this.ipData = resolve.ipData;
             this.card_image = resolve.card_image;
             this.time = resolve.items["time"];
             this.count = resolve.items["n_hits"];
@@ -67,7 +69,7 @@ export class SearchComponent implements OnInit, OnDestroy {
             this.size = resolve.items["size"];
             this.updatePageControls();
             this.updateForm()
-        })
+        });
     }
 
     previousPage() {
@@ -144,6 +146,15 @@ export class SearchComponent implements OnInit, OnDestroy {
     submitForm(page: number) {
         const query: GameQuery = { ...this.form.value };
         if(page > 0) query.page = this.page;
+
+        // Customize the results based on the country or the continent of the user.
+        if(this.ipData.country !== null || this.ipData.continentName !== null) {
+            // Metacritic specific query
+            if(this.ipData.country === 'Japan' || this.ipData.country === 'Korea' || this.ipData.country === 'Australia')
+                query.country = this.ipData.country;
+            else if(this.ipData.continentName !== null)
+                query.country = this.ipData.continentName;
+        }
 
         if (Array.isArray(query.genres) && query.genres.length > 0) {
             query.genre = query.genres.join(', ');

@@ -18,7 +18,7 @@ services:
       memlock:
         soft: -1
         hard: -1
-    mem_limit: 1g
+    mem_limit: 4g
     networks:
       - esnet
     volumes:

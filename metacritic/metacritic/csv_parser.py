@@ -10,8 +10,8 @@ class CSVParser:
                 "title", "title_search", "title_keyword", "url", 
                 "summary", "genre", "metascore", "critic_reviews", 
                 "user_score", "user_reviews", "release_date", "images", 
-                "video", "video_type", "sentiment", "must_play", "crew",
-                "countries", "companies", "platforms", "rating", "official_site"
+                "video", "video_thumbnail", "video_type", "sentiment", "must_play", "crew",
+                "countries", "companies", "platforms", "rating"
             ]
     
     def __init__(self):

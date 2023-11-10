@@ -7,7 +7,10 @@
 # useful for handling different item types with a single interface
 import json
 import os
+import time
+from anyio import sleep
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search
 from metacritic.items import MetacriticItemEncoder
 import threading
 from scrapy.exceptions import DropItem
@@ -20,6 +23,9 @@ class ElasticsearchPipeline:
     n_items = 0                                     # Items processed
     data_dir = "data"                               # Partition data directory
     data_path = "data-part-"+str(data_item)+".json" # Partition data file path
+    items_time = []                                 # Time of retrieving each item (last 10 items)
+    avg_items = 10                                  # Number of items to take the average time to retrieve each item
+    time_start = 0                                  # Start execution time
 
     def update_data_path(self):
         self.data_item += 1
@@ -101,32 +107,57 @@ class ElasticsearchPipeline:
         self.items = []
         self.update_data_path()
 
+    def print_progress(self, spider, max_items):
+        mean = self.get_avg_time()
+        spider.logger.debug("-------------------------------------------------------------------------")
+        spider.logger.debug("\t  Items processed: " + str(self.n_items) + " / " + str(max_items) + " | " + str(max_items-self.n_items) + " left | ETA: " + ("{:0.3f}".format(mean) if mean >= 0 else "??") + " seconds/item")
+        spider.logger.debug("-------------------------------------------------------------------------")
+        if spider.current_url != None:
+            spider.logger.debug("\t\t\t"+spider.current_url)
+            spider.logger.debug("-------------------------------------------------------------------------")
+    
+    def get_avg_time(self):
+        self.items_time.append(time.time() - self.time_start)
+        if len(self.items_time) > self.avg_items:
+            self.items_time.pop(0)
+            mean = sum(self.items_time) / self.avg_items
+            return mean
+        return -1
+
+
     def process_item(self, item, spider):
+        self.time_start = time.time()
         max_items = spider.settings.getint('MAX_ITEMS_PROCESSED')
         items_partition = spider.settings.getint('ITEMS_PARTITION')
         first_item_page = spider.settings.getint('FIRST_ITEM_PAGE')
         if (self.data_item < first_item_page):
-            self.data_item = first_item_page
+            self.data_item = first_item_page-2
+            self.update_data_path()
         if self.n_items < max_items:
             data = dict(item)
-            # Save the item in elastic
-            self.es.index(index=self.index_name, body=data)
-            # Save the item in the items list
-            self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
+            # Save the item in elastic if it's not already in elastic
+            if self.item_exists_by_attribute('url', data['url']):
+                self.n_items += 1
+                self.print_progress(spider, max_items)
+                return None
+            else: 
+                self.es.index(index=self.index_name, body=data)
+                # Save the item in the items list if its name is not None
+                if item['title'] != None:
+                    self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
 
-            # Save the partition
-            if len(self.items) == items_partition:
-                writer = threading.Thread(target=self.write_data(spider))
-                writer.start()
-                self.threads.append(writer)
-            self.n_items += 1
-            spider.logger.debug("-------------------------------------------------------------------------")
-            spider.logger.debug("\t\t\tItems processed: " + str(self.n_items) + " / " + str(max_items) + " | " + str(max_items-self.n_items) + " left")
-            spider.logger.debug("-------------------------------------------------------------------------")
-            if spider.current_url is not None:
-                spider.logger.debug("\t\t\t"+spider.current_url)
-                spider.logger.debug("-------------------------------------------------------------------------")
-            return item
+                    # Save the partition
+                    if len(self.items) == items_partition:
+                        writer = threading.Thread(target=self.write_data(spider))
+                        writer.start()
+                        self.threads.append(writer)
+                    self.n_items += 1
+                    self.print_progress(spider, max_items)
+                    return item
+                else:
+                    self.n_items += 1
+                    self.print_progress(spider, max_items)
+                    return None
         else:
             spider.start_urls = []
             spider.urls = []
@@ -136,6 +167,13 @@ class ElasticsearchPipeline:
 
             raise DropItem("Crawling stopped due to reached máx. items.")
     
+    # Check if item exists by attribute in elastic
+    def item_exists_by_attribute(self, field_name, field_value):
+        s = Search(using=self.es, index=self.index_name)
+        s = s.query('match', **{field_name: field_value})
+        response = s.execute()
+        
+        return len(response) > 0
 
     # In this function we check if data partitions exist and load them
     def load_data_partitions(self, spider):
@@ -146,7 +184,9 @@ class ElasticsearchPipeline:
                     with open(file_path, 'r') as f:
                         items = json.load(f)
                         for item in items:
-                            self.es.index(index=self.index_name, body=item)
+                            item_data = json.loads(item)
+                            if not self.item_exists_by_attribute('url', item_data['url']):
+                                self.es.index(index=self.index_name, body=item)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)
                 except Exception as e:
@@ -164,6 +204,12 @@ class ElasticsearchPipeline:
             # Wait until all threads are finished
             for thread in self.threads:
                 thread.join()
+            # Clear all lists
+            spider.urls.clear()
+            spider.start_urls.clear()
+            self.items.clear()
+            self.items_time.clear()
+            self.threads.clear()
             # Transform the data into a CSV file
             spider.logger.debug("Transforming data into CSV file...")
             CSVParser()

@@ -18,7 +18,7 @@ ELASTIC_PORT = int(os.getenv("ELASTIC_PORT", default=9200))
 BACKEND_HOST = os.getenv("BACKEND_HOST", default="localhost")
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", default=8000))
 ROOT_PATH = os.getenv("ROOT_PATH", default="/api/v1")
-PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=50))
+PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=16))
 
 INDEX = os.getenv("INDEX", default="metacritic")
 
@@ -63,10 +63,13 @@ class MetacriticItem(BaseModel):
 def normalize_string(input_string):    
     return re.sub(r'[^a-zA-Z0-9\s]', '', input_string)
 
-def parse_data(response):
+def parse_data(response, page, size):
     server_response = {
-        "time": response["took"],
-        "n_hits": response["hits"]["total"]["value"],
+        "time": int(response["took"])/1000, # Seconds
+        "size": int(size),
+        "page": int(page), 
+        "n_pages": round(int(response["hits"]["total"]["value"])/(size), 0),
+        "n_hits": response["hits"]["total"]["value"], # Number of hits
         #"relation": response["hits"]["total"]["relation"],
         "hits": response["hits"]["hits"]
     }
@@ -79,15 +82,16 @@ def get_all_results(
 ):
     query = {
         "size": PAGE_SIZE,
-        "from": 0,
+        "from": int(size * page),
         "query": {
             "match_all": {}  
         }
     }
     if(size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
+    query["from"] = int(size*page)
     response = es.search(index=INDEX, body=query)
-    return parse_data(response)
+    return parse_data(response, 0, PAGE_SIZE)
 
 @app.post(ROOT_PATH + "/search")
 def multisearch(
@@ -97,9 +101,12 @@ def multisearch(
     # Query template
     query = {
         "size": int(item.size),
-        "from": int(item.page),
+        "from": int(item.page*item.size),
         "query": {"bool": {"must": [], "should": []}},  
-        "sort": []
+        "sort": [],
+        "collapse": {
+            "field": "title_keyword"  # Don't show duplicated hits with this field
+        }
     }
     range = 0
     if(item.size < PAGE_SIZE):
@@ -180,7 +187,7 @@ def multisearch(
     if(query["query"] == {}):
         query["query"] = {"match_all": {}}
     response = es.search(index=INDEX, body=query)
-    return parse_data(response)
+    return parse_data(response, item.page, item.size)
 
 
 @app.get(ROOT_PATH + "/user-reviews")
@@ -285,7 +292,7 @@ def search_by_title(
             }
         }
         response = es.search(index=INDEX, body=query)
-        return parse_data(response)
+        return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
         
@@ -302,7 +309,7 @@ def search_by_genre(
             }
         }
         response = es.search(index=INDEX, body=query)
-        return parse_data(response)
+        return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
 
@@ -321,7 +328,7 @@ def search_by_metascore(
             }
         }
         response = es.search(index=INDEX, body=query)
-        return parse_data(response)
+        return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
         
@@ -339,7 +346,7 @@ def search_by_user_score(
             ]
         }
         response = es.search(index=INDEX, body=query)
-        return parse_data(response)
+        return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
     
@@ -363,7 +370,7 @@ def search_by_date_range(
         query["query"]["range"]["release_date"]["lte"] = end_date.strftime("%Y-%m-%d")
         
     response = es.search(index=INDEX, body=query)
-    return parse_data(response)
+    return parse_data(response, 0, PAGE_SIZE)
 
 if __name__ == "__main__":
     uvicorn_config = {

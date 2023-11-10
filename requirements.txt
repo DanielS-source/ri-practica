@@ -38,7 +38,7 @@ typing_extensions==4.8.0
 urllib3==1.26.16
 w3lib==2.1.2
 zope.interface==6.0
-
+elasticsearch_dsl==8.9.0
 
 beautifulsoup4==4.12.2
 jsbeautifier==1.14.9

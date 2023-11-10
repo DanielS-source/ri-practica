@@ -24,6 +24,7 @@ import { MaxUserVotesResolver } from './search/resolvers/max-user-votes.resolver
 import { HttpClientModule } from '@angular/common/http';
 import { ListComponent } from './list/list.component';
 import { PlatformListResolver } from './search/resolvers/platforms.resolver';
+import { VjsComponent } from './details/vjs/vjs.component';
 
 const routes: Routes = [
     {
@@ -46,7 +47,8 @@ const routes: Routes = [
         AppComponent,
         SearchComponent,
         DetailsComponent,
-        ListComponent
+        ListComponent,
+        VjsComponent
     ],
     imports: [
         RouterModule.forRoot(routes),

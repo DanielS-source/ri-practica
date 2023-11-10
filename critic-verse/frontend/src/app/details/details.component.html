@@ -1,6 +1,90 @@
-<p>{{item?.title}}</p>
-<div class="flex items-center justify-end mt-2">
-    <button mat-icon-button matTooltip="Close" (click)="closeDrawer()">
-        <mat-icon class="text-gray-800"></mat-icon>
-    </button>
+<div class="flex items-center justify-end bg-center w-[50vw] h-[100vh] rounded-tl-md rounded-bl-md text-white bg-black/[.1]" [style.background-image]="'url(' + backgroundImageUrl + ')'" style="background-size: 100% 100% !important; max-height: 100vh !important; background-repeat: repeat;"> 
+    <div id="card" class="h-[100vh] w-[50vw] backdrop-blur">
+        <div class="flex flex-row">
+            <button mat-icon-button matTooltip="Close" class="mt-10 ml-6" (click)="closeDrawer()" style="background-color: rgba(255, 255, 255, 0.6); box-shadow: 0px 0px 10.5px rgba(0, 0, 0, 0.3); width: 35px; height: 35px; border-radius: 15px;">
+                <mat-icon color="primary" style="margin-left:-0.27em;margin-top: -1em; margin-bottom: 0.37em;">close</mat-icon>
+            </button>
+            <div id="card-title" *ngIf="item != null" class="w-full mt-1 pr-5 pl-5 pt-1 pb-1 overflow-hidden">
+                <div *ngIf="item.must_play"
+                    class="z-10 rotate-[-12deg] mb-[-1.75em] mt-[0.75em] top-0 right-0 h-8 max-h-[12px] w-50 max-w-[65px] select-none rounded-full text-center align-middle font-sans text-xs font-medium disabled:pointer-events-none"
+                    data-ripple-dark="true">
+                    <span
+                        class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.75 rounded-full dark:bg-indigo-900 dark:text-indigo-300 whitespace-nowrap">Must
+                        Play!</span>
+                </div>
+                <div class="card-title-info" class="grid grid-flow-row-dense grid-cols-2 pt-2 pb-2 h-[10vh]" style="background-color: rgba(0, 0, 0, 0.6); border-radius: 10px;">
+                    <!-- Left column -->
+                    <div class="text-center inline-block" style="margin-top: auto; margin-bottom: auto;">
+                        <!-- Content for the left column --> 
+                        <p id="game-title" style="text-shadow: black 2px 2px 4px;" class="inline-block text-3xl text-center">{{item?.title}}</p>
+                    </div>
+                    <!-- Right column -->
+                    <div id="game-scores" class="inline-block text-center pr-1.5" style="text-shadow: black 1px 1px 2px; margin-top: -1.10em">
+                        <!-- Content for the right column --> 
+                        <p id="game-testscore" class="inline-block mr-1.5">
+                            Critics ({{item.critic_reviews}}):
+                            <mat-icon *ngIf="item.metascore > 70" color="primary">star</mat-icon>
+                            <mat-icon *ngIf="item.metascore > 40 && item.metascore <= 70"
+                                color="primary">star_half</mat-icon>
+                            <mat-icon *ngIf="item.metascore <= 40" color="primary">star_outline</mat-icon>
+                            {{item.metascore}}/100
+                        </p>
+                        <p id="game-userscore" class="inline-block ml-1.5">
+                            Users ({{item.user_reviews}}):
+                                <mat-icon *ngIf="item.user_score > 7" color="primary" class="mt-5">star</mat-icon>
+                                <mat-icon *ngIf="item.user_score > 4 && item.user_score <= 7" color="primary" class="mt-5">star_half</mat-icon>
+                                <mat-icon *ngIf="item.user_score <= 4" color="primary" class="mt-5">star_outline</mat-icon>
+                            {{item.user_score}}/10
+                        </p>
+                        <p *ngIf="item.release_date != null" id="game-release-date" class="inline-block ml-2.5">
+                            Release date: {{item?.release_date}}
+                        </p>
+                        <p *ngIf="item.sentiment != null" id="game-sentiment" class="inline-block ml-2.5">
+                            Public perception: {{item?.sentiment}}
+                        </p>
+                        <p *ngIf="item.rating != null" id="game-rating" class="inline-block ml-2.5">
+                            Rating: {{item?.rating}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="card-info" class="mt-2 pt-2 pl-5 pr-5 pb-5 overflow-hidden">
+            <div class="text-center justify-center w-[50vw] items-center flex flex-col">
+                <div *ngIf="(videoSource.length > 0 && !show_credits)" id="game-preview" class="justify-center items-center text-center mt-2 w-[50vw]">
+                    <app-vjs [options]="{autoplay: true, controls: true, fluid: true, sources: [{}]}" [source]="videoSource" [thumbnail]="thumbnail" [type]="videoType"></app-vjs>
+                </div>
+                <fieldset *ngIf="(crew.length > 0 && show_credits)" id="card-crew" class="text-center w-[48vw] ml-[-2vw] h-auto p-2 text-ellipsis overflow-hidden" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 800px;">
+                    <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Credits</legend>
+                    <p id="game-crew" class="text-sm" [innerHTML]="crew"></p> 
+                </fieldset>
+                <button type="button" *ngIf="crew.length > 0" (click)="showCredits()" class="w-[7vw] h-[4vh] mt-[1vh]" style="padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">{{credits_text}}</button>
+            </div>
+            
+            
+            <fieldset *ngIf="description.length > 0" id="card-description" class="text-center w-full display-block xl:mt-2 p-5" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Summary</legend>
+                <p id="game-description" class="text-sm" [innerHTML]="description"></p>
+            </fieldset>    
+            <div class="grid grid-cols-4 grid-flow-row-dense items-center content-center mt-4">
+                <fieldset id="card-genres" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                    <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Genres</legend>
+                    <p id="game-genres" class="text-sm" [innerHTML]="genre"></p> 
+                </fieldset>
+                <fieldset id="card-countries" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                    <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Countries</legend>
+                    <p id="game-countries" class="text-sm" [innerHTML]="countries"></p>
+                </fieldset> 
+                <fieldset id="card-platforms" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                    <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Platforms</legend>
+                    <p id="game-platforms" class="text-sm" [innerHTML]="platforms"></p>
+                </fieldset> 
+                
+                <fieldset id="card-companies" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                    <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Companies</legend>
+                    <p id="game-companies" class="text-sm" [innerHTML]="companies"></p>
+                </fieldset> 
+            </div>            
+        </div>
+    </div>
 </div>

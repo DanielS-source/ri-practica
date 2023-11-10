@@ -123,4 +123,4 @@ class UserAgentMiddleware:
     def process_request(self, request, spider):
         if self.user_agents:
             request.headers['User-Agent'] = random.choice(self.user_agents)
-            spider.logger.info('Using random user-agent: %s', request.headers['User-Agent'])
+            #spider.logger.info('Using random user-agent: %s', request.headers['User-Agent'])

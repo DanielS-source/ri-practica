@@ -42,18 +42,7 @@ services:
     container_name: angular-frontend
     restart: unless-stopped
     ports:
-      - 4200:80
-    expose:
-      - "4200"
-    networks:
-      - esnet
-  elastic-setup:
-    build:
-      context: ./init_data
-      dockerfile: Dockerfile
-    container_name: elastic-setup
-    depends_on:
-      - elasticsearch
+      - 80:80
     networks:
       - esnet
 

@@ -38,16 +38,7 @@ services:
     container_name: riws-angular-frontend
     restart: unless-stopped
     ports:
-      - 4200:80
-    expose:
-      - "4200"
-    networks:
-      - esnet
-  elastic-setup:
-    image: danielsilvai/riws-elastic-setup:beta
-    container_name: riws-elastic-setup
-    depends_on:
-      - riws-elasticsearch
+      - 8080:80
     networks:
       - esnet
 

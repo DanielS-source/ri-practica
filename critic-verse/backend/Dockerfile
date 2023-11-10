@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11
+FROM python:3.11-slim
 
 # Set the working directory to /app
 WORKDIR /app
@@ -17,4 +17,4 @@ EXPOSE 8000
 ENV NAME critic-verse
 
 # Run main.py when the container launches
-CMD ["python", "main.py"]
+CMD ["sh", "-c", "python -u init_elastic.py && python -u main.py"]

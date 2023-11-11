@@ -113,7 +113,6 @@ def multisearch(
     if(item.size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
     if(item.title != None and len(item.title) > 0):
-        print("title_search: " + normalize_string(item.title))
         query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
     if(item.title_asc != None):
         sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})

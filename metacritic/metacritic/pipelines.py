@@ -77,18 +77,18 @@ class ElasticsearchPipeline:
                         "analyzer": "edge_ngram_analyzer"
                     },
                     "title_keyword": {"type": "keyword"},
-                    "critic_reviews": {"type": "integer"},
+                    #"url": {"type": "keyword"},
+                    "summary": {"type": "text"},
                     "genre": {"type": "keyword"},
                     "metascore": {"type": "integer"},
-                    "release_date": {"type": "date", "format": "yyyy-MM-dd"},
-                    "summary": {"type": "text"},
-                    "url": {"type": "keyword"},
-                    "user_reviews": {"type": "integer"},
+                    "critic_reviews": {"type": "integer"},
                     "user_score": {"type": "float"},
-                    "images": {"type": "text"},
-                    "video": {"type": "text"},
-                    "video_type": {"type": "text"},
-                    "sentiment": {"type": "text"},
+                    "user_reviews": {"type": "integer"},
+                    "release_date": {"type": "date", "format": "yyyy-MM-dd"},     
+                    #"images": {"type": "text"},
+                    #"video": {"type": "text"},
+                    #"video_type": {"type": "text"},
+                    #"video_thumbnail": {"type": "text"},               
                     "must_play": {"type": "text"},
                     "crew": {"type": "text"},
                     "countries": {"type": "keyword"},
@@ -171,7 +171,6 @@ class ElasticsearchPipeline:
         s = Search(using=self.es, index=self.index_name)
         s = s.query('match', **{field_name: field_value})
         response = s.execute()
-        print(response)
         return len(response) > 0
 
     # In this function we check if data partitions exist and load them
@@ -185,7 +184,7 @@ class ElasticsearchPipeline:
                         for item in items:
                             item_data = json.loads(item)
                             if not self.item_exists_by_attribute('url', item_data['url']):
-                                print("Item does not exist. Loading data...")
+                                spider.logger.debug("Item does not exist in elasticsearch. Loading data...")
                                 self.es.index(index=self.index_name, body=item)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)

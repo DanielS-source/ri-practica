@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDrawer } from '@angular/material/sidenav';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { SearchService } from './search.service';
-import { GameItem, GameQuery, IPData } from './search.model';
+import { GameItem, GameQuery, IPData, SuggestionQuery } from './search.model';
 
 @Component({
     selector: 'app-search',
@@ -26,15 +26,104 @@ export class SearchComponent implements OnInit, OnDestroy {
     previousBtn: boolean = true;
     nextBtn: boolean = false;
     ipData!: IPData;
+    suggestions: string[] = [];
+    alternatives: string[] = [];
+    suggestionContainer: boolean = false;
+    suggestion: any;
+    separator: any;
+    showAlternatives: boolean = true;
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
-    @ViewChild('drawer') drawer!: MatDrawer;
+    //@ViewChild('drawer') drawer!: MatDrawer;
+    @ViewChild('suggestions') suggestionsResults!: ElementRef;
+
+    /* Suggestion logic */
+
+    showSuggestionContainer() {
+        if(this.form.controls["title"].value != null) {
+            if(this.suggestionContainer == false && this.form.controls["title"].value.length > 0) { 
+                this.suggestionContainer = true;
+                this.loadSuggestions();
+            }
+        }
+    }
+
+    normalizeContent(data: string) {
+        if(data != null && data.length > 0) {
+            data = String(data).replaceAll("<b>", "").replaceAll("</b>", "");
+        }
+        return data;
+    }
+
+    createSuggestion(title: string) {
+        const formattedTitle = this.normalizeContent(title);
+        this.suggestion = this.renderer.createElement('div');
+        this.renderer.setAttribute(this.suggestion, 'class', 'suggestion p-1 cursor-pointer');
+        this.renderer.setAttribute(this.suggestion, 'title', formattedTitle);
+        this.renderer.listen(this.suggestion, 'click', ()=>{ this.onSuggestionClick(formattedTitle); });
+        this.suggestion.innerHTML = title;
+        this.renderer.appendChild(this.suggestionsResults.nativeElement, this.suggestion);
+    }
+
+    onSuggestionClick(element: string) {
+        this.form.controls["title"].setValue(element);
+        this.hideSuggestionContainer();
+    }
+
+    createSeparator() {
+        this.separator = this.renderer.createElement('hr');
+        this.renderer.setAttribute(this.separator, 'class', 'border-[#424242]/50 w-[10vw] m-auto');
+        this.renderer.appendChild(this.suggestionsResults.nativeElement, this.separator);
+    }
+
+    loadSuggestions() {
+        const sQuery: SuggestionQuery = { "title": this.form.controls["title"].value };
+        this.suggestions = [];
+        this.alternatives = [];
+        this._searchService.getSuggestions(sQuery)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((response: any) => {
+                this.suggestions = response.suggestions.map((hit: { _source: any }) => hit._source.title_search);
+                this.alternatives = [];
+                if(response.hits.length > 0)
+                    this.alternatives = response.hits.map((hit: { highlight: any }) =>  hit.highlight.title_search);
+                if(this.suggestions.length > 0) {
+                    this.showAlternatives = false;
+                    this.suggestionsResults.nativeElement.innerHTML = "";
+                    this.suggestions.forEach(suggestion => {
+                        if(this.suggestionsResults.nativeElement.innerHTML.length > 0)
+                            this.createSeparator();
+                        this.createSuggestion(suggestion);
+                    });
+                }else if(this.alternatives.length > 0) {
+                    this.showAlternatives = true;
+                    this.suggestionsResults.nativeElement.innerHTML = "";
+                    this.alternatives.forEach(alternative => {
+                        if(this.suggestionsResults.nativeElement.innerHTML.length > 0)
+                            this.createSeparator();
+                        this.createSuggestion(alternative);
+                    }); 
+                }else{
+                    if(this.suggestionContainer) {
+                        this.suggestionsResults.nativeElement.innerHTML = "No suggestions";
+                        this.hideSuggestionContainer();
+                    }
+                }
+            });
+    }
+
+    hideSuggestionContainer() {
+        this.suggestionContainer = false;
+    }
+
+    /* End suggestion logic */
 
     constructor(
         private _fb: FormBuilder,
         private _route: ActivatedRoute,
-        private _searchService: SearchService
+        private _searchService: SearchService,
+        private renderer: Renderer2
     ) {
         this.form = this._fb.group({
             title: null,

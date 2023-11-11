@@ -42,10 +42,9 @@ export class VjsComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     // Set up the Video.js player
-    if(this.source != null) {
+    if(this.source != null)
       this.options.sources = [{src: this.source, type: this.type, quality: 'high'}];
-    }
-    console.log(this.thumbnail);
+
     this.createVjsPlayer();
 
     this.player = videojs(this.videoElement, this.options, this.onPlayerReady.bind(this));

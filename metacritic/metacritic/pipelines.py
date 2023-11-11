@@ -71,10 +71,15 @@ class ElasticsearchPipeline:
             }
             mapping = {
                 "properties": {
-                    "title": {"type": "text"},
+                    # "title": {"type": "text"},
                     "title_search": {
                         "type": "text",
-                        "analyzer": "edge_ngram_analyzer"
+                        "analyzer": "edge_ngram_analyzer",
+                        "fields": {
+                            "suggest": {
+                                "type": "completion"
+                            }
+                        }
                     },
                     "title_keyword": {"type": "keyword"},
                     #"url": {"type": "keyword"},
@@ -183,9 +188,9 @@ class ElasticsearchPipeline:
                         items = json.load(f)
                         for item in items:
                             item_data = json.loads(item)
-                            if not self.item_exists_by_attribute('url', item_data['url']):
+                            if not self.item_exists_by_attribute('title_keyword', item_data['title_keyword']):
                                 spider.logger.debug("Item does not exist in elasticsearch. Loading data...")
-                                self.es.index(index=self.index_name, body=item)
+                                self.es.index(index=self.index_name, body=item_data)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)
                 except Exception as e:

@@ -20,6 +20,8 @@ BACKEND_HOST = os.getenv("BACKEND_HOST", default="localhost")
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", default=8000))
 ROOT_PATH = os.getenv("ROOT_PATH", default="/api/v1")
 PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=12))
+MAX_SUGGESTIONS = int(os.getenv("MAX_SUGGESTIONS", default=8))
+MAX_ALTERNATIVES = int(os.getenv("MAX_ALTERNATIVES", default=8))
 
 INDEX = os.getenv("INDEX", default="metacritic")
 
@@ -64,17 +66,44 @@ class MetacriticItem(BaseModel):
 def normalize_string(input_string):    
     return re.sub(r'[^a-zA-Z0-9\s]', '', unidecode(input_string))
 
+def normalize_string_lower(input_string):    
+    return re.sub(r'[^a-zA-Z0-9\s]', '', unidecode(input_string)).replace('  ', ' ').lower().strip()
+
+# Custom implementation for completion suggester highlighting
+def highlight_word(word, input_string):
+    data = normalize_string_lower(input_string['_source']['title_search'])
+    word_normalized = normalize_string_lower(word)
+    fpos = data.find(word_normalized)
+    if(fpos > -1):
+        word_len = (fpos + len(word_normalized))
+        input_string['_source']['title_search'] = input_string['_source']['title_search'][0:fpos] + \
+                                            "<b>"+input_string['_source']['title_search'][fpos:word_len] + "</b>" + \
+                                            input_string['_source']['title_search'][word_len:]
+    return input_string
+
+def highlight_array(word, array):
+    return [highlight_word(word, input_string) for input_string in array]
+
 def parse_data(response, page, size):
     server_response = {
-        "time": int(response["took"])/1000, # Seconds
+        "time": (int(response["took"])/1000 if "took" in response else -1), # Seconds
         "size": int(size),
         "page": int(page), 
-        "n_pages": round(int(response["hits"]["total"]["value"])/(size), 0),
-        "n_hits": response["hits"]["total"]["value"], # Number of hits
+        "n_pages": (round(int(response["hits"]["total"]["value"])/(size), 0) if "hits" in response else -1),
+        "n_hits": (response["hits"]["total"]["value"] if "hits" in response else -1), # Number of hits
         #"relation": response["hits"]["total"]["relation"],
-        "hits": response["hits"]["hits"]
+        "hits": (response["hits"]["hits"] if "hits" in response else -1)
     }
-    return JSONResponse(content=server_response)
+    return JSONResponse(content=server_response) 
+
+def parse_data_suggestions(word, response, alts):
+    server_response = {
+        "time": (int(response["took"])/1000 if "took" in response else -1), # Seconds
+        "alt": bool(alts),
+        "hits": (response["hits"]["hits"] if "hits" in response else []),
+        "suggestions": (highlight_array(word, response["suggest"]["game-suggest"][0]["options"]) if "suggest" in response else [])
+    }
+    return JSONResponse(content=server_response)   
 
 @app.get(ROOT_PATH + "/")
 def get_all_results(
@@ -114,6 +143,8 @@ def multisearch(
         query["size"] = PAGE_SIZE
     if(item.title != None and len(item.title) > 0):
         query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
+        query["query"]["bool"]["should"].append({"wildcard": {"summary": "*"+normalize_string(item.title)+"*"}})
+            
     if(item.title_asc != None):
         sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})
     if(item.genre != None):
@@ -280,22 +311,79 @@ def get_countries():
         return country_list
     return country_list
 
-@app.get(ROOT_PATH + "/titles")
-def search_by_title(
-    q: str = Query(None, description="Title", ),
+@app.post(ROOT_PATH + "/suggestions")
+def get_suggestions(
+    title: str = Body(..., description="Title", example="Pokém", embed=True),
 ):
-    if q:
+    alternatives = False
+    if title and len(title) > 0:
         query = {
-            "query": {
-                "match_phrase_prefix": {
-                    "title": q
+            "_source": ["title_search"],
+            "suggest": {
+                "game-suggest": {
+                    "prefix": normalize_string(title),
+                    "completion": {
+                        "field": "title_search.suggest",
+                        "size": MAX_SUGGESTIONS,
+                        "skip_duplicates": True         # Don't show duplicates in suggestions
+                    }
                 }
+            },
+            "sort": [{
+                "_score": "desc"
+            }, {
+                "user_score": "desc"
+            }],
+            # Not working with completion suggester! (Known bug in Elasticsearch)
+            #
+            #"highlight": {
+            #    "fields": [{"title_search": {}}]
+            #}
+        }
+
+        alternatives_query = {
+            "from": 0,
+            "size": MAX_ALTERNATIVES,       # Max alternatives per query
+            "_source": ["title_search"],    # Return the title search only
+            "query": {
+                "bool": {
+                    "must": [ 
+                    {
+                        "match": {
+                            "title_search": normalize_string(title)
+                        }
+                    }],
+                    "should": [{
+                        "wildcard": {
+                            "summary": "*"+normalize_string(title)+"*"
+                        }
+                    }]
+                }               
+            },
+            "highlight": {
+                "pre_tags":["<b>"], 
+                "post_tags": ["</b>"],
+                "fields": [{"title_search": {}}]
+            },
+            "sort": [{
+                "_score": "desc"
+            }, {
+                "user_score": "desc"
+            }], 
+            "collapse": {
+                "field": "title_keyword"    # Don't show duplicated hits with this field
             }
         }
         response = es.search(index=INDEX, body=query)
-        return parse_data(response, 0, PAGE_SIZE)
+
+        # If no suggestions then load alternatives
+        if(len(response["suggest"]["game-suggest"][0]["options"]) == 0):
+            alternatives = True
+            response = es.search(index=INDEX, body=alternatives_query)
+                    
+        return parse_data_suggestions(title, response, alternatives)
     else:
-        return {"detail":"Not Found"}
+        return parse_data_suggestions(title, {}, alternatives)
         
 @app.get(ROOT_PATH + "/genres")
 def search_by_genre(

@@ -67,6 +67,10 @@ export type GameItem = {
     video_type: string;
 };
 
+export interface SuggestionQuery {
+    title?: string | null;
+};
+
 export interface GameQuery {
     title?: string | null;
     title_asc?: boolean | null;

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { GameItem, GameQuery, IPData, SearchItem } from './search.model';
+import { GameItem, GameQuery, IPData, SearchItem, SuggestionQuery } from './search.model';
 
 @Injectable({
     providedIn: 'root'
@@ -30,6 +30,10 @@ export class SearchService {
                     };
                 })
             );
+    }
+
+    getSuggestions(query: SuggestionQuery): Observable<any> {
+        return this._httpClient.post<any>(`${environment.api}/suggestions`, query, this.httpOptions);
     }
 
     getMaxUserVotes(): Observable<number> {

@@ -12,7 +12,7 @@
                         class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.75 rounded-full dark:bg-indigo-900 dark:text-indigo-300 whitespace-nowrap">Must
                         Play!</span>
                 </div>
-                <div class="card-title-info" class="grid grid-flow-row-dense grid-cols-2 pt-2 pb-2 h-[10vh]" style="background-color: rgba(0, 0, 0, 0.6); border-radius: 10px;">
+                <div class="card-title-info" class="grid grid-flow-row-dense grid-cols-2 pb-2 h-[10vh]" style="background-color: rgba(0, 0, 0, 0.6); border-radius: 10px;">
                     <!-- Left column -->
                     <div class="text-center inline-block" style="margin-top: auto; margin-bottom: auto;">
                         <!-- Content for the left column --> 
@@ -67,22 +67,22 @@
                 <p id="game-description" class="text-sm" [innerHTML]="description"></p>
             </fieldset>    
             <div class="grid grid-cols-4 grid-flow-row-dense items-center content-center mt-4">
-                <fieldset id="card-genres" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                <fieldset id="card-genres" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 170px;">
                     <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Genres</legend>
-                    <p id="game-genres" class="text-sm" [innerHTML]="genre"></p> 
+                    <p id="game-genres" class="text-sm overflow-hidden" [innerHTML]="genre"></p> 
                 </fieldset>
-                <fieldset id="card-countries" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                <fieldset id="card-countries" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 170px;">
                     <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Countries</legend>
-                    <p id="game-countries" class="text-sm" [innerHTML]="countries"></p>
+                    <p id="game-countries" class="text-sm overflow-hidden" [innerHTML]="countries"></p>
                 </fieldset> 
-                <fieldset id="card-platforms" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                <fieldset id="card-platforms" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 170px;">
                     <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Platforms</legend>
-                    <p id="game-platforms" class="text-sm" [innerHTML]="platforms"></p>
+                    <p id="game-platforms" class="text-sm overflow-hidden" [innerHTML]="platforms"></p>
                 </fieldset> 
                 
-                <fieldset id="card-companies" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px;">
+                <fieldset id="card-companies" class="text-center w-[10.5vw] h-[19.5vh] display-block p-1 m-1" style="text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px 10px 10px 10px; max-height: 170px;">
                     <legend style="text-align: left; width: auto; padding:5px; border-radius: 10px; text-shadow: black 1px 1px 2px; background-color: rgba(0, 0, 0, 0.75);">Companies</legend>
-                    <p id="game-companies" class="text-sm" [innerHTML]="companies"></p>
+                    <p id="game-companies" class="text-sm overflow-hidden" [innerHTML]="companies"></p>
                 </fieldset> 
             </div>            
         </div>

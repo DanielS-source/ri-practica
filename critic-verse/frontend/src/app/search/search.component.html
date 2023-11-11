@@ -8,8 +8,13 @@
                         <mat-label id="critic-verse-logo" class="text-3xl w-full" style="background: -webkit-linear-gradient(left, black, #c2185b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: #c2185b;">CRITIC-VERSE</mat-label>
                     </div>
                     <mat-form-field class="w-full">
-                        <input matInput placeholder="Search" formControlName="title">
+                        <input matInput placeholder="Search" (keyup)="loadSuggestions()" (keyup)="showSuggestionContainer()" (focus)="showSuggestionContainer()" formControlName="title">
                     </mat-form-field>
+                    <fieldset *ngIf="suggestionContainer" class="w-[18.4vw] absolute z-10 bg-[#e5e7eb] pt-5 mt-[-2.3vh] text-center pb-2" style="border-radius: 0px 0px 15px 15px" id="suggestions">
+                        <legend *ngIf="!showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Suggestions</legend>
+                        <legend *ngIf="showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Alternatives</legend>
+                        <div class="w-full pb-2" #suggestions></div>
+                    </fieldset>
 
                     <mat-form-field class="w-full">
                         <mat-label>Genres</mat-label>

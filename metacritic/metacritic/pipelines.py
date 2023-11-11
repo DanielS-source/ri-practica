@@ -94,8 +94,7 @@ class ElasticsearchPipeline:
                     "countries": {"type": "keyword"},
                     "companies": {"type": "text"},
                     "platforms": {"type": "keyword"},
-                    "rating": {"type": "text"},
-                    "official_site": {"type": "keyword"}
+                    "rating": {"type": "text"}
                 }
             }
             self.es.indices.create(index=self.index_name, body={"settings": settings, "mappings": mapping})
@@ -172,7 +171,7 @@ class ElasticsearchPipeline:
         s = Search(using=self.es, index=self.index_name)
         s = s.query('match', **{field_name: field_value})
         response = s.execute()
-        
+        print(response)
         return len(response) > 0
 
     # In this function we check if data partitions exist and load them
@@ -186,6 +185,7 @@ class ElasticsearchPipeline:
                         for item in items:
                             item_data = json.loads(item)
                             if not self.item_exists_by_attribute('url', item_data['url']):
+                                print("Item does not exist. Loading data...")
                                 self.es.index(index=self.index_name, body=item)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)

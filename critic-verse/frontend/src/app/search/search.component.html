@@ -1,7 +1,7 @@
 <div>
     <div class="min-h-screen flex">
         <!-- Search section -->
-        <div class="w-1/5 p-4 flex-col bg-p_contrast">
+        <div class="h-[100vh] w-[20vw] p-4 flex-col bg-p_contrast fixed">
             <form [formGroup]="form" class="flex flex-col h-full">
                 <div>
                     <div id="logo" class="mb-5">
@@ -97,7 +97,7 @@
             </form>
         </div>
         <!-- Results section -->
-        <div class="w-4/5 bg-primary">
+        <div class="ml-[20vw] w-[80vw] bg-primary">
             <app-list [items]="items" [time]="time" [count]="count" [page]="page+1" [previousBtn]="previousBtn" [nextBtn]="nextBtn" (callPreviousPage)="previousPage()" (callNextPage)="nextPage()"></app-list>
         </div>
     </div>

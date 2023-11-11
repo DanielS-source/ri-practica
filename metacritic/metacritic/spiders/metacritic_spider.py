@@ -9,6 +9,7 @@ from scrapy.linkextractors import LinkExtractor
 from bs4 import BeautifulSoup
 import jsbeautifier
 import json
+from unidecode import unidecode
 
 class MetacriticSpiderSpider(scrapy.Spider):
     name = "metacritic_spider"
@@ -36,7 +37,7 @@ class MetacriticSpiderSpider(scrapy.Spider):
 
     # Transforms the string to lowercase and then removes special characters, leaving only letters, numbers and spaces.
     def normalize_string_lower(self, input_string):    
-        return re.sub(r'[^a-zA-Z0-9\s]', '', input_string.lower())
+        return re.sub(r'[^a-zA-Z0-9\s]', '', unidecode(input_string.lower()))
     
     def normalize_string(self, input_string):
         data = input_string.strip()
@@ -91,11 +92,9 @@ class MetacriticSpiderSpider(scrapy.Spider):
         return urls
 
     def handle_httpstatus(self, response):
+        # Add more handlers if necessary
         if response.status == 404:
-            if self.data_extracted:
-                self.data_extracted = False
-            else:
-                self.extracting = False
+            self.data_extracted = False
     
     async def parse_sitemap(self, response):
         try:

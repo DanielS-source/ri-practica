@@ -9,6 +9,7 @@ import uvicorn
 from elasticsearch import Elasticsearch
 import datetime
 from pydantic import BaseModel
+from unidecode import unidecode
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ ELASTIC_PORT = int(os.getenv("ELASTIC_PORT", default=9200))
 BACKEND_HOST = os.getenv("BACKEND_HOST", default="localhost")
 BACKEND_PORT = int(os.getenv("BACKEND_PORT", default=8000))
 ROOT_PATH = os.getenv("ROOT_PATH", default="/api/v1")
-PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=16))
+PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=12))
 
 INDEX = os.getenv("INDEX", default="metacritic")
 
@@ -61,7 +62,7 @@ class MetacriticItem(BaseModel):
 
 # Transforms the string removing special characters, leaving only letters, numbers and spaces.
 def normalize_string(input_string):    
-    return re.sub(r'[^a-zA-Z0-9\s]', '', input_string)
+    return re.sub(r'[^a-zA-Z0-9\s]', '', unidecode(input_string))
 
 def parse_data(response, page, size):
     server_response = {
@@ -112,6 +113,7 @@ def multisearch(
     if(item.size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
     if(item.title != None and len(item.title) > 0):
+        print("title_search: " + normalize_string(item.title))
         query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
     if(item.title_asc != None):
         sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})

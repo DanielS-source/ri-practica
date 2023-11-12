@@ -24,7 +24,8 @@ if init_elastic:
         print("Index " + index_name + " deleted")
     # Create the index if it does not exist
     if not es.indices.exists(index=index_name):
-        settings = {"analysis": {
+        settings = {
+            "analysis": {
                 "analyzer": {
                     "edge_ngram_analyzer": {
                     "tokenizer": "edge_ngram_tokenizer",
@@ -43,31 +44,35 @@ if init_elastic:
         }
         mapping = {
             "properties": {
-                "title": {"type": "text"},
+                # "title": {"type": "text"},
                 "title_search": {
                     "type": "text",
-                    "analyzer": "edge_ngram_analyzer"
+                    "analyzer": "edge_ngram_analyzer",
+                    "fields": {
+                        "suggest": {
+                            "type": "completion"
+                        }
+                    }
                 },
                 "title_keyword": {"type": "keyword"},
-                "critic_reviews": {"type": "integer"},
+                #"url": {"type": "keyword"},
+                "summary": {"type": "text"},
                 "genre": {"type": "keyword"},
                 "metascore": {"type": "integer"},
-                "release_date": {"type": "date", "format": "yyyy-MM-dd"},
-                "summary": {"type": "text"},
-                "url": {"type": "keyword"},
-                "user_reviews": {"type": "integer"},
+                "critic_reviews": {"type": "integer"},
                 "user_score": {"type": "float"},
-                "images": {"type": "text"},
-                "video": {"type": "text"},
-                "video_type": {"type": "text"},
-                "sentiment": {"type": "text"},
+                "user_reviews": {"type": "integer"},
+                "release_date": {"type": "date", "format": "yyyy-MM-dd"},     
+                #"images": {"type": "text"},
+                #"video": {"type": "text"},
+                #"video_type": {"type": "text"},
+                #"video_thumbnail": {"type": "text"},               
                 "must_play": {"type": "text"},
                 "crew": {"type": "text"},
                 "countries": {"type": "keyword"},
                 "companies": {"type": "text"},
                 "platforms": {"type": "keyword"},
-                "rating": {"type": "text"},
-                "official_site": {"type": "keyword"}
+                "rating": {"type": "text"}
             }
         }
         es.indices.create(index=index_name, body={"settings": settings, "mappings": mapping})

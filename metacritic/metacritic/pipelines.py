@@ -52,7 +52,8 @@ class ElasticsearchPipeline:
     
     def create_index(self):
         if not self.es.indices.exists(index=self.index_name):
-            settings = {"analysis": {
+            settings = {
+                "analysis": {
                     "analyzer": {
                         "edge_ngram_analyzer": {
                         "tokenizer": "edge_ngram_tokenizer",

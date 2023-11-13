@@ -92,6 +92,8 @@ export interface GameQuery {
     start_date?: Date | string | null;
     end_date?: Date | string | null;
     date_asc?: boolean | null;
+    sort_by?: string | null;
+    sort_direction?: string | null;
     page?: number | null;
     size?: number | null;
 };

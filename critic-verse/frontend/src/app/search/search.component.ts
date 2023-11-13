@@ -32,17 +32,233 @@ export class SearchComponent implements OnInit, OnDestroy {
     suggestion: any;
     separator: any;
     showAlternatives: boolean = true;
+    sortTypes: {
+        label: string,
+        value: string,
+    }[] = [
+        {
+            label:"Critic Score",
+            value: "metascore_asc"
+        },
+        {
+            label:"User Score",
+            value: "user_score_asc"
+        },
+        {
+            label:"Release Date",
+            value: "date_asc"
+        },
+        {
+            label:"Title",
+            value: "title_asc"
+        }
+    ];
+    sortDirections: string[] = [
+        "Ascending",
+        "Descending"
+    ];
+    sortDir: string = "Descending";
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     //@ViewChild('drawer') drawer!: MatDrawer;
     @ViewChild('suggestions') suggestionsResults!: ElementRef;
 
+    constructor(
+        private _fb: FormBuilder,
+        private _route: ActivatedRoute,
+        private _searchService: SearchService,
+        private renderer: Renderer2
+    ) {
+        this.form = this._fb.group({
+            title: null,
+            genres: new FormControl([]),
+            platforms: new FormControl([]),
+            start_date: null,
+            end_date: null,
+            user_score_min: 0,
+            user_score_max: 10,
+            critic_score_min: 0,
+            critic_score_max: 100,
+            user_reviews_min: 0,
+            user_reviews_max: 0,
+            critic_reviews_min: 0,
+            critic_reviews_max: 0,
+            sort_by: null,
+            sort_direction: null,
+        });
+    }
+
+    ngOnInit(): void {
+        this._route.data.pipe(takeUntil(this._unsubscribeAll)).subscribe((resolve: any) => {
+            this.maxUserVotes = resolve.maxUserVotes;
+            this.maxCriticVotes = resolve.maxCriticVotes;
+            this.genres = resolve.genres;
+            this.platforms = resolve.platforms;
+            this.ipData = resolve.ipData;
+            this.card_image = resolve.card_image;
+            this.updatePageControls();
+            this.updateForm()
+            this.initializeItems();
+        });
+    }
+
+    previousPage() {
+        this.page -= 1;
+        this.submitForm(this.page);
+    }
+
+    nextPage() {
+        this.page += 1;
+        this.submitForm(this.page);
+    }
+
+    updateForm() {
+        this.form.patchValue({
+            user_reviews_min: 0,
+            user_reviews_max: this.maxUserVotes,
+            critic_reviews_min: 0,
+            critic_reviews_max: this.maxCriticVotes,
+            sort_by: {
+                label:"Critic Score",
+                value: "metascore_asc"
+            },
+            sort_direction: this.sortDirections[this.sortDirections.length - 1],
+        })
+    }
+
+    ngOnDestroy(): void {
+        this._unsubscribeAll.next(undefined);
+        this._unsubscribeAll.complete();
+    }
+
+    updatePageControls() {
+        this.previousBtn = (this.page == 0);
+        this.nextBtn = !(this.page < this.nPages);
+    }
+
+    submitFormKeepPage() {
+        const query: GameQuery = { ...this.form.value };
+        query.page = this.page;
+
+        if (Array.isArray(query.genres) && query.genres.length > 0) {
+            query.genre = query.genres.join(', ');
+        } else {
+            query.genre = null;
+        }
+        delete query.genres;
+
+        if (Array.isArray(query.platforms) && query.platforms.length > 0) {
+            query.platform = query.platforms.join(', ');
+        } else {
+            query.platform = null;
+        }
+        delete query.platforms;
+
+        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+
+        if (query.start_date instanceof Date) {
+            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        }
+
+        if (query.end_date instanceof Date) {
+            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        }
+
+        this._searchService.searchItems(query)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((response: any) => {
+                this.items = response.hits.map((hit: { _source: any }) => hit._source);
+                this.time = response.time;
+                this.count = response.n_hits;
+                this.page = response.page;
+                this.nPages = response.n_pages;
+                this.size = response.size;
+
+                this.updatePageControls();
+            });
+    }
+
+    personalization(query: GameQuery) {
+        // Customize the results based on the country or the continent of the user.
+        if(this.ipData.country !== null || this.ipData.continentName !== null) {
+            // Metacritic specific query
+            if(this.ipData.country === 'Japan' || this.ipData.country === 'Korea' || this.ipData.country === 'Australia')
+                query.country = this.ipData.country;
+            else if(this.ipData.continentName !== null)
+                query.country = this.ipData.continentName;
+        }
+    }
+
+    initializeItems() {
+        const query: GameQuery = { ...this.form.value };
+
+        this.personalization(query);
+
+        this._searchService.searchItems(query)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((response: any) => {
+                this.items = response.hits.map((hit: { _source: any }) => hit._source);
+                this.time = response.time;
+                this.count = response.n_hits;
+                this.page = response.page;
+                this.nPages = response.n_pages;
+                this.size = response.size;
+
+                this.updatePageControls();
+            });
+    }
+
+
+    submitForm(page: number) {
+        const query: GameQuery = { ...this.form.value };
+        if(page > 0) query.page = this.page;
+
+        this.personalization(query);
+
+        if (Array.isArray(query.genres) && query.genres.length > 0) {
+            query.genre = query.genres.join(', ');
+        } else {
+            query.genre = null;
+        }
+        delete query.genres;
+
+        if (Array.isArray(query.platforms) && query.platforms.length > 0) {
+            query.platform = query.platforms.join(', ');
+        } else {
+            query.platform = null;
+        }
+        delete query.platforms;
+
+        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
+
+        if (query.start_date instanceof Date) {
+            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        }
+
+        if (query.end_date instanceof Date) {
+            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        }
+
+        this._searchService.searchItems(query)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((response: any) => {
+                this.items = response.hits.map((hit: { _source: any }) => hit._source);
+                this.time = response.time;
+                this.count = response.n_hits;
+                this.page = response.page;
+                this.nPages = response.n_pages;
+                this.size = response.size;
+
+                this.updatePageControls();
+            });
+    }
+
     /* Suggestion logic */
 
     showSuggestionContainer() {
         if(this.form.controls["title"].value != null) {
-            if(this.suggestionContainer == false && this.form.controls["title"].value.length > 0) { 
+            if(this.suggestionContainer == false && this.form.controls["title"].value.length > 0) {
                 this.suggestionContainer = true;
                 this.loadSuggestions();
             }
@@ -103,7 +319,7 @@ export class SearchComponent implements OnInit, OnDestroy {
                         if(this.suggestionsResults.nativeElement.innerHTML.length > 0)
                             this.createSeparator();
                         this.createSuggestion(alternative);
-                    }); 
+                    });
                 }else{
                     if(this.suggestionContainer) {
                         this.suggestionsResults.nativeElement.innerHTML = "No suggestions";
@@ -118,188 +334,5 @@ export class SearchComponent implements OnInit, OnDestroy {
     }
 
     /* End suggestion logic */
-
-    constructor(
-        private _fb: FormBuilder,
-        private _route: ActivatedRoute,
-        private _searchService: SearchService,
-        private renderer: Renderer2
-    ) {
-        this.form = this._fb.group({
-            title: null,
-            genres: new FormControl([]),
-            platforms: new FormControl([]),
-            start_date: null,
-            end_date: null,
-            user_score_min: 0,
-            user_score_max: 10,
-            critic_score_min: 0,
-            critic_score_max: 100,
-            user_reviews_min: 0,
-            user_reviews_max: 0,
-            critic_reviews_min: 0,
-            critic_reviews_max: 0,
-        });
-    }
-
-    ngOnInit(): void {
-        this._route.data.pipe(takeUntil(this._unsubscribeAll)).subscribe((resolve: any) => {
-            this.maxUserVotes = resolve.maxUserVotes;
-            this.maxCriticVotes = resolve.maxCriticVotes;
-            this.genres = resolve.genres;
-            this.platforms = resolve.platforms;
-            this.ipData = resolve.ipData;
-            this.card_image = resolve.card_image;
-            this.updatePageControls();
-            this.updateForm()
-            this.initializeItems();
-        });
-    }
-
-    previousPage() {
-        this.page -= 1;
-        this.submitForm(this.page);
-    }
-
-    nextPage() {
-        this.page += 1;
-        this.submitForm(this.page);
-    }
-
-    updateForm() {
-        this.form.patchValue({
-            user_reviews_min: 0,
-            user_reviews_max: this.maxUserVotes,
-            critic_reviews_min: 0,
-            critic_reviews_max: this.maxCriticVotes
-        })
-    }
-
-    ngOnDestroy(): void {
-        this._unsubscribeAll.next(undefined);
-        this._unsubscribeAll.complete();
-    }
-
-    updatePageControls() {
-        this.previousBtn = (this.page == 0);
-        this.nextBtn = !(this.page < this.nPages);
-    }
-
-    submitFormKeepPage() {
-        const query: GameQuery = { ...this.form.value };
-        query.page = this.page;
-
-        if (Array.isArray(query.genres) && query.genres.length > 0) {
-            query.genre = query.genres.join(', ');
-        } else {
-            query.genre = null;
-        }
-        delete query.genres;
-
-        if (Array.isArray(query.platforms) && query.platforms.length > 0) {
-            query.platform = query.platforms.join(', ');
-        } else {
-            query.platform = null;
-        }
-        delete query.platforms;
-
-        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-
-        if (query.start_date instanceof Date) {
-            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
-        }
-
-        if (query.end_date instanceof Date) {
-            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
-        }
-
-        this._searchService.searchItems(query)
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((response: any) => {
-                this.items = response.hits.map((hit: { _source: any }) => hit._source);
-                this.time = response.time;
-                this.count = response.n_hits;
-                this.page = response.page;
-                this.nPages = response.n_pages;
-                this.size = response.size;
-                
-                this.updatePageControls();
-            });
-    }
-
-    personalization(query: GameQuery) {
-        // Customize the results based on the country or the continent of the user.
-        if(this.ipData.country !== null || this.ipData.continentName !== null) {
-            // Metacritic specific query
-            if(this.ipData.country === 'Japan' || this.ipData.country === 'Korea' || this.ipData.country === 'Australia')
-                query.country = this.ipData.country;
-            else if(this.ipData.continentName !== null)
-                query.country = this.ipData.continentName;
-        }
-    }
-
-    initializeItems() {
-        const query: GameQuery = { ...this.form.value };
-
-        this.personalization(query);
-
-        this._searchService.searchItems(query)
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((response: any) => {
-                this.items = response.hits.map((hit: { _source: any }) => hit._source);
-                this.time = response.time;
-                this.count = response.n_hits;
-                this.page = response.page;
-                this.nPages = response.n_pages;
-                this.size = response.size;
-                
-                this.updatePageControls();
-            });
-    }
-
-
-    submitForm(page: number) {
-        const query: GameQuery = { ...this.form.value };
-        if(page > 0) query.page = this.page;
-
-        this.personalization(query);
-
-        if (Array.isArray(query.genres) && query.genres.length > 0) {
-            query.genre = query.genres.join(', ');
-        } else {
-            query.genre = null;
-        }
-        delete query.genres;
-
-        if (Array.isArray(query.platforms) && query.platforms.length > 0) {
-            query.platform = query.platforms.join(', ');
-        } else {
-            query.platform = null;
-        }
-        delete query.platforms;
-
-        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-
-        if (query.start_date instanceof Date) {
-            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
-        }
-
-        if (query.end_date instanceof Date) {
-            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
-        }
-
-        this._searchService.searchItems(query)
-            .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((response: any) => {
-                this.items = response.hits.map((hit: { _source: any }) => hit._source);
-                this.time = response.time;
-                this.count = response.n_hits;
-                this.page = response.page;
-                this.nPages = response.n_pages;
-                this.size = response.size;
-                
-                this.updatePageControls();
-            });
-    }
 
 }

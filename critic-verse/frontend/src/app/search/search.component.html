@@ -91,6 +91,21 @@
                             <input matSliderEndThumb matInput formControlName="critic_reviews_max">
                         </mat-slider>
                     </div>
+
+                    <mat-form-field class="w-full">
+                        <mat-label>Sort by</mat-label>
+                        <mat-select [formControlName]="'sort_by'" class="w-full">
+                            <mat-option *ngFor="let sort of sortTypes" [value]="sort.value">{{ sort.label }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field class="w-full">
+                        <mat-label>Sort direction</mat-label>
+                        <mat-select [formControlName]="'sort_dir'" [(value)]="sortDir" class="w-full">
+                            <mat-option *ngFor="let dir of sortDirections" [value]="dir">{{ dir }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
                 </div>
 
                 <div class="flex flex-col mx-auto mt-4 pb-10">

@@ -148,16 +148,11 @@ export class SearchComponent implements OnInit, OnDestroy {
             this.maxCriticVotes = resolve.maxCriticVotes;
             this.genres = resolve.genres;
             this.platforms = resolve.platforms;
-            this.items = resolve.items["items"];
             this.ipData = resolve.ipData;
             this.card_image = resolve.card_image;
-            this.time = resolve.items["time"];
-            this.count = resolve.items["n_hits"];
-            this.page = resolve.items["page"];
-            this.nPages = resolve.items["n_pages"];
-            this.size = resolve.items["size"];
             this.updatePageControls();
             this.updateForm()
+            this.initializeItems();
         });
     }
 
@@ -232,10 +227,7 @@ export class SearchComponent implements OnInit, OnDestroy {
             });
     }
 
-    submitForm(page: number) {
-        const query: GameQuery = { ...this.form.value };
-        if(page > 0) query.page = this.page;
-
+    personalization(query: GameQuery) {
         // Customize the results based on the country or the continent of the user.
         if(this.ipData.country !== null || this.ipData.continentName !== null) {
             // Metacritic specific query
@@ -244,6 +236,33 @@ export class SearchComponent implements OnInit, OnDestroy {
             else if(this.ipData.continentName !== null)
                 query.country = this.ipData.continentName;
         }
+    }
+
+    initializeItems() {
+        const query: GameQuery = { ...this.form.value };
+
+        this.personalization(query);
+
+        this._searchService.searchItems(query)
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((response: any) => {
+                this.items = response.hits.map((hit: { _source: any }) => hit._source);
+                this.time = response.time;
+                this.count = response.n_hits;
+                this.page = response.page;
+                this.nPages = response.n_pages;
+                this.size = response.size;
+                
+                this.updatePageControls();
+            });
+    }
+
+
+    submitForm(page: number) {
+        const query: GameQuery = { ...this.form.value };
+        if(page > 0) query.page = this.page;
+
+        this.personalization(query);
 
         if (Array.isArray(query.genres) && query.genres.length > 0) {
             query.genre = query.genres.join(', ');

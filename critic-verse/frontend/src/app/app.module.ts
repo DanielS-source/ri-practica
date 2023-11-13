@@ -17,7 +17,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule, Routes } from '@angular/router';
 import { SearchComponent } from './search/search.component';
 import { MatSliderModule } from '@angular/material/slider';
-import { InitialPageResolver } from './search/resolvers/initial-page.resolver';
 import { GenreListResolver } from './search/resolvers/genre-list.resolver';
 import { MaxCriticVotesResolver } from './search/resolvers/max-critic-votes.resolver';
 import { MaxUserVotesResolver } from './search/resolvers/max-user-votes.resolver';
@@ -32,7 +31,6 @@ const routes: Routes = [
         path: "search",
         component: SearchComponent,
         resolve: {
-            items: InitialPageResolver,
             genres: GenreListResolver,
             platforms: PlatformListResolver,
             maxCriticVotes: MaxCriticVotesResolver,

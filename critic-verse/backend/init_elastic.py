@@ -7,12 +7,29 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-init_elastic = bool(os.getenv("SLEEP_TIME"))
+def is_elasticsearch_alive(elasticsearch_host):
+    try:
+        es = Elasticsearch([elasticsearch_host])
+        return es.ping()
+    except Exception as e:
+        print(f"Error checking Elasticsearch status: {e}")
+        return False
+
+init_elastic = bool(os.getenv("INIT_ELASTIC", False))
 
 if init_elastic:
     print("Waiting for Elasticsearch")
-    sleep_time = int(os.getenv("SLEEP_TIME"))
-    time.sleep(sleep_time)
+    max_retries = int(os.getenv("MAX_RETRIES", 50))
+    sleep_time = int(os.getenv("SLEEP_TIME", 5))
+    for attempt in range(1, max_retries + 1):
+        if is_elasticsearch_alive(os.getenv("ELASTICSEARCH_HOST")):
+            print("Elasticsearch is alive")
+            break
+        else:
+            print(f"Attempt {attempt}/{max_retries}: Elasticsearch is not alive. Retrying in {sleep_time} seconds.")
+            time.sleep(sleep_time)
+    else:
+        print(f"Max retries reached. Unable to connect to Elasticsearch.")    
     print("Processing data...")
     data_dir = os.getenv("DATA_DIR")
     index_name = os.getenv("INDEX_NAME")

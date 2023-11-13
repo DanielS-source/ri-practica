@@ -318,7 +318,7 @@ def get_suggestions(
     alternatives = False
     if title and len(title) > 0:
         query = {
-            "_source": ["title_search"],
+            "_source": ["title_search"],                # Return the title search only
             "suggest": {
                 "game-suggest": {
                     "prefix": normalize_string(title),
@@ -343,8 +343,8 @@ def get_suggestions(
 
         alternatives_query = {
             "from": 0,
-            "size": MAX_ALTERNATIVES,       # Max alternatives per query
-            "_source": ["title_search"],    # Return the title search only
+            "size": MAX_ALTERNATIVES,                   # Max alternatives per query
+            "_source": ["title_search"],                # Return the title search only
             "query": {
                 "bool": {
                     "must": [ 
@@ -371,7 +371,7 @@ def get_suggestions(
                 "user_score": "desc"
             }], 
             "collapse": {
-                "field": "title_keyword"    # Don't show duplicated hits with this field
+                "field": "title_keyword"                # Don't show duplicated hits with this field
             }
         }
         response = es.search(index=INDEX, body=query)
@@ -384,6 +384,26 @@ def get_suggestions(
         return parse_data_suggestions(title, response, alternatives)
     else:
         return parse_data_suggestions(title, {}, alternatives)
+    
+@app.get(ROOT_PATH + "/title")
+def search_by_title(
+    title: str = Query(None, description="Title or description", example="Pokémon"),
+):
+    if title:
+        query = {
+            "query": {
+                "bool": {
+                    "must": [], 
+                    "should": []
+                }
+            }
+        }
+        query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(title)}})
+        query["query"]["bool"]["should"].append({"wildcard": {"summary": "*"+normalize_string(title)+"*"}})
+        response = es.search(index=INDEX, body=query)
+        return parse_data(response, 0, PAGE_SIZE)
+    else:
+        return {"detail":"Not Found"}
         
 @app.get(ROOT_PATH + "/genres")
 def search_by_genre(
@@ -392,11 +412,10 @@ def search_by_genre(
     if q:
         query = {
             "query": {
-                "match": {
-                    "genre": q
-                }
+                "match": {}
             }
         }
+        query["query"]["match"]["genre"] = {"genre": q}
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
@@ -410,12 +429,11 @@ def search_by_metascore(
         query = {
             "query": {
                 "range": {
-                    "metascore": {
-                        "gte": metascore
-                    }
+                    "metascore": {}
                 }
             }
         }
+        query["query"]["range"]["metascore"] = {"gte": metascore}
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
@@ -427,13 +445,11 @@ def search_by_user_score(
 ):
     if q:
         query = {
-            "query": {
-                "match_all": {}
-            },
-            "sort": [
-                { "user_score": "desc" }
-            ]
+            "query": {},
+            "sort": []
         }
+        query["query"] = {"match_all": {}}
+        query["sort"].append({"user_score":"desc"})
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
@@ -448,12 +464,11 @@ def search_by_date_range(
     query = {
         "query": {
             "range": {
-                "release_date": {
-                    "gte": start_date
-                }
+                "release_date": {}
             }
         }
     }
+    query["query"]["range"]["release_date"] = {"gte": start_date}
     
     if end_date is not None:
         query["query"]["range"]["release_date"]["lte"] = end_date.strftime("%Y-%m-%d")

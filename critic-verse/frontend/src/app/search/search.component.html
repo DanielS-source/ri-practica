@@ -1,7 +1,7 @@
 <div>
-    <div class="min-h-screen flex">
+    <div class="min-h-screen max-h-screen flex">
         <!-- Search section -->
-        <div class="h-[100vh] w-[20vw] p-4 flex-col bg-p_contrast fixed">
+        <div class="w-[500px] max-h-[100vh] overflow-y-auto overflow-x-clip p-4 flex-col bg-p_contrast sticky">
             <form [formGroup]="form" class="flex flex-col h-full">
                 <div>
                     <div id="logo" class="mb-5">
@@ -93,8 +93,8 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col mx-auto mt-4 mb-4">
-                    <button mat-fab extended color="primary" (click)="submitForm(0)">
+                <div class="flex flex-col mx-auto mt-4 pb-10">
+                    <button mat-fab extended color="primary" class="w-52" (click)="submitForm(0)">
                         <mat-icon>search</mat-icon>
                         Search
                     </button>
@@ -102,7 +102,7 @@
             </form>
         </div>
         <!-- Results section -->
-        <div class="ml-[20vw] w-[80vw] bg-primary">
+        <div class="bg-primary sticky">
             <app-list [items]="items" [time]="time" [count]="count" [page]="page+1" [previousBtn]="previousBtn" [nextBtn]="nextBtn" (callPreviousPage)="previousPage()" (callNextPage)="nextPage()"></app-list>
         </div>
     </div>

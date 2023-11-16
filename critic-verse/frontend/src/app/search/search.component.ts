@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { MatDrawer } from '@angular/material/sidenav';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { SearchService } from './search.service';
 import { GameItem, GameQuery, IPData, SuggestionQuery } from './search.model';
+import * as moment from 'moment';
 
 @Component({
     selector: 'app-search',
@@ -12,8 +12,6 @@ import { GameItem, GameQuery, IPData, SuggestionQuery } from './search.model';
 })
 export class SearchComponent implements OnInit, OnDestroy {
     form: FormGroup;
-    maxUserVotes: number = 0;
-    maxCriticVotes: number = 0;
     genres: string[] = [];
     platforms: string[] = [];
     items: GameItem[] = [];
@@ -38,19 +36,19 @@ export class SearchComponent implements OnInit, OnDestroy {
     }[] = [
         {
             label:"Critic Score",
-            value: "metascore_asc"
+            value: "metascore"
         },
         {
             label:"User Score",
-            value: "user_score_asc"
+            value: "user_score"
         },
         {
             label:"Release Date",
-            value: "date_asc"
+            value: "release_date"
         },
         {
             label:"Title",
-            value: "title_asc"
+            value: "title"
         }
     ];
     sortDirections: string[] = [
@@ -58,6 +56,8 @@ export class SearchComponent implements OnInit, OnDestroy {
         "Descending"
     ];
     sortDir: string = "Descending";
+
+    dateFormat: string = "YYYY-MM-DD";
 
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
@@ -91,8 +91,6 @@ export class SearchComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this._route.data.pipe(takeUntil(this._unsubscribeAll)).subscribe((resolve: any) => {
-            this.maxUserVotes = resolve.maxUserVotes;
-            this.maxCriticVotes = resolve.maxCriticVotes;
             this.genres = resolve.genres;
             this.platforms = resolve.platforms;
             this.ipData = resolve.ipData;
@@ -115,14 +113,7 @@ export class SearchComponent implements OnInit, OnDestroy {
 
     updateForm() {
         this.form.patchValue({
-            user_reviews_min: 0,
-            user_reviews_max: this.maxUserVotes,
-            critic_reviews_min: 0,
-            critic_reviews_max: this.maxCriticVotes,
-            sort_by: {
-                label:"Critic Score",
-                value: "metascore_asc"
-            },
+            sort_by: "metascore",
             sort_direction: this.sortDirections[this.sortDirections.length - 1],
         })
     }
@@ -155,14 +146,12 @@ export class SearchComponent implements OnInit, OnDestroy {
         }
         delete query.platforms;
 
-        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-
         if (query.start_date instanceof Date) {
-            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+            query.start_date = moment(query.start_date).format(this.dateFormat);
         }
 
         if (query.end_date instanceof Date) {
-            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+            query.end_date = moment(query.end_date).format(this.dateFormat);
         }
 
         this._searchService.searchItems(query)
@@ -212,6 +201,8 @@ export class SearchComponent implements OnInit, OnDestroy {
 
     submitForm(page: number) {
         const query: GameQuery = { ...this.form.value };
+        query.title = this.form.controls["title"].value;
+        
         if(page > 0) query.page = this.page;
 
         this.personalization(query);
@@ -230,14 +221,12 @@ export class SearchComponent implements OnInit, OnDestroy {
         }
         delete query.platforms;
 
-        const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-
-        if (query.start_date instanceof Date) {
-            query.start_date = query.start_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        if (query.start_date instanceof moment) {
+            query.start_date = moment(query.start_date).format(this.dateFormat);
         }
 
-        if (query.end_date instanceof Date) {
-            query.end_date = query.end_date.toLocaleDateString('es-ES', dateOptions).split('/').reverse().join('-');
+        if (query.end_date instanceof moment) {
+            query.end_date = moment(query.end_date).format(this.dateFormat);
         }
 
         this._searchService.searchItems(query)

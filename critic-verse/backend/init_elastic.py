@@ -59,7 +59,7 @@ if init_elastic:
                 }
             }
         }
-        mapping = {
+        mappings = {
             "properties": {
                 # "title": {"type": "text"},
                 "title_search": {
@@ -92,7 +92,7 @@ if init_elastic:
                 "rating": {"type": "text"}
             }
         }
-        es.indices.create(index=index_name, body={"settings": settings, "mappings": mapping})
+        es.indices.create(index=index_name, settings=settings, mappings=mappings)
         print("Index " + index_name + " created")
     # Load the data to the index
     for filename in os.listdir(data_dir):
@@ -102,8 +102,8 @@ if init_elastic:
                 with open(file_path, 'r') as f:
                     items = json.load(f)
                     for item in items:
-                        es.index(index=index_name, body=item)
-                    es.indices.refresh(index=index_name)
+                        es.options().index(index=index_name, document=item)
+                    es.options().indices.refresh(index=index_name)
                 print("Data loaded successfully! from partition: " + filename)
             except Exception as e:
                 print(e)

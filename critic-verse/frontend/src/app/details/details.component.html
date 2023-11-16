@@ -4,9 +4,9 @@
             <button mat-icon-button matTooltip="Close" class="mt-10 ml-6" (click)="closeDrawer()" style="background-color: rgba(255, 255, 255, 0.6); box-shadow: 0px 0px 10.5px rgba(0, 0, 0, 0.3); width: 35px; height: 35px; border-radius: 15px;">
                 <mat-icon color="primary" style="margin-left:-0.27em;margin-top: -1em; margin-bottom: 0.37em;">close</mat-icon>
             </button>
-            <div id="card-title" *ngIf="item != null" class="w-full mt-1 pr-5 pl-5 pt-1 pb-1 overflow-hidden">
+            <div id="card-title" *ngIf="item != null" class="w-full mt-1 pr-5 pl-5 pt-2 pb-2 overflow-hidden">
                 <div *ngIf="item.must_play"
-                    class="z-10 rotate-[-12deg] mb-[-1.75em] mt-[0.75em] top-0 right-0 h-8 max-h-[12px] w-50 max-w-[65px] select-none rounded-full text-center align-middle font-sans text-xs font-medium disabled:pointer-events-none"
+                    class="z-100 rotate-[-12deg] mb-[-1.75em] mt-[0.75em] top-0 right-0 h-8 max-h-[12px] w-50 max-w-[65px] select-none rounded-full text-center align-middle font-sans text-xs font-medium disabled:pointer-events-none"
                     data-ripple-dark="true">
                     <span
                         class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.75 rounded-full dark:bg-indigo-900 dark:text-indigo-300 whitespace-nowrap">Must
@@ -14,37 +14,60 @@
                 </div>
                 <div class="card-title-info" class="grid grid-flow-row-dense grid-cols-2 pb-2 h-[10vh]" style="background-color: rgba(0, 0, 0, 0.6); border-radius: 10px;">
                     <!-- Left column -->
-                    <div class="text-center inline-block" style="margin-top: auto; margin-bottom: auto;">
+                    <div class="text-center inline-block w-full mt-auto mb-auto">
                         <!-- Content for the left column --> 
-                        <p id="game-title" style="text-shadow: black 2px 2px 4px;" class="inline-block text-3xl text-center">{{item?.title}}</p>
+                        <div class="flex flex-col-2">
+                            <p id="game-title" style="text-shadow: black 2px 2px 4px;" class="text-2xl max-w-[20vw] text-center ml-5 z-2">
+                                {{item?.title}}
+                            </p>
+                            <div [ngSwitch]="item.rating" class="mt-auto mb-auto ml-3">
+                                <img *ngSwitchCase="'AO'" src="assets/ratings/AO.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'E'" src="assets/ratings/E.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'E10+'" src="assets/ratings/E10+.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'EC'" src="assets/ratings/EC.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'M'" src="assets/ratings/M.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'RP'" src="assets/ratings/RP.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchCase="'T'" src="assets/ratings/T.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                                <img *ngSwitchDefault src="assets/ratings/RP.svg" alt="Rating" class="mt-1.5 w-[3em] h-[2em]" />
+                            </div>
+                        </div>
+                        
                     </div>
                     <!-- Right column -->
-                    <div id="game-scores" class="inline-block text-center pr-1.5" style="text-shadow: black 1px 1px 2px; margin-top: -1.10em">
+                    <div id="game-info" class="inline-block text-center w-full" style="text-shadow: black 1px 1px 2px;">
                         <!-- Content for the right column --> 
-                        <p id="game-testscore" class="inline-block mr-1.5">
-                            Critics ({{item.critic_reviews}}):
-                            <mat-icon *ngIf="item.metascore > 70" color="primary">star</mat-icon>
-                            <mat-icon *ngIf="item.metascore > 40 && item.metascore <= 70"
-                                color="primary">star_half</mat-icon>
-                            <mat-icon *ngIf="item.metascore <= 40" color="primary">star_outline</mat-icon>
-                            {{item.metascore}}/100
-                        </p>
-                        <p id="game-userscore" class="inline-block ml-1.5">
-                            Users ({{item.user_reviews}}):
-                                <mat-icon *ngIf="item.user_score > 7" color="primary" class="mt-5">star</mat-icon>
-                                <mat-icon *ngIf="item.user_score > 4 && item.user_score <= 7" color="primary" class="mt-5">star_half</mat-icon>
-                                <mat-icon *ngIf="item.user_score <= 4" color="primary" class="mt-5">star_outline</mat-icon>
-                            {{item.user_score}}/10
-                        </p>
-                        <p *ngIf="item.release_date != null" id="game-release-date" class="inline-block ml-2.5">
-                            Release date: {{item?.release_date}}
-                        </p>
-                        <p *ngIf="item.sentiment != null" id="game-sentiment" class="inline-block ml-2.5">
-                            Public perception: {{item?.sentiment}}
-                        </p>
-                        <p *ngIf="item.rating != null" id="game-rating" class="inline-block ml-2.5">
+                        <div class="grid grid-cols-2 gap-0">
+                            <div class="relative mt-5 ml-auto">
+                                <p id="game-criticscore">
+                                    Critics ({{item.critic_reviews}}):
+                                    <mat-icon *ngIf="item.metascore > 70" color="primary">star</mat-icon>
+                                    <mat-icon *ngIf="item.metascore > 40 && item.metascore <= 70"
+                                        color="primary">star_half</mat-icon>
+                                    <mat-icon *ngIf="item.metascore <= 40" color="primary">star_outline</mat-icon>
+                                    {{item.metascore}}/100
+                                </p>
+                                <p id="game-userscore" class="relative mt-[-2vh]">
+                                    Users ({{item.user_reviews}}):
+                                        <mat-icon *ngIf="item.user_score > 7" color="primary" class="mt-5">star</mat-icon>
+                                        <mat-icon *ngIf="item.user_score > 4 && item.user_score <= 7" color="primary" class="mt-5">star_half</mat-icon>
+                                        <mat-icon *ngIf="item.user_score <= 4" color="primary" class="mt-5">star_outline</mat-icon>
+                                    {{item.user_score}}/10
+                                </p>
+                            </div>
+                            <div>
+                                <p *ngIf="item.release_date != null" id="game-release-date" class="inline-block">
+                                    Release date: <br/>
+                                    <b>{{item?.release_date}}</b>
+                                </p>
+                                <p *ngIf="item.sentiment != null" id="game-sentiment" class="inline-block">
+                                    Public perception: <br />
+                                    <b>{{item?.sentiment}}</b>
+                                </p>
+                            </div>
+                        </div>
+                        <!--<p *ngIf="item.rating != null" id="game-rating" class="inline-block ml-2.5">
                             Rating: {{item?.rating}}
-                        </p>
+                        </p>-->
                     </div>
                 </div>
             </div>

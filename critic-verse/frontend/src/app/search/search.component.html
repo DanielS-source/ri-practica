@@ -12,13 +12,12 @@
                             (keyup)="loadSuggestions()"
                             (keyup)="showSuggestionContainer()"
                             (focus)="showSuggestionContainer()"
-                            (blur)="hideSuggestionContainer()"
                             formControlName="title">
                     </mat-form-field>
                     <fieldset *ngIf="suggestionContainer" class="w-[18.4vw] absolute z-10 bg-[#e5e7eb] pt-5 mt-[-2.3vh] text-center pb-2" style="border-radius: 0px 0px 15px 15px" id="suggestions">
                         <legend *ngIf="!showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Suggestions</legend>
                         <legend *ngIf="showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Alternatives</legend>
-                        <div class="w-full pb-2" #suggestions></div>
+                        <div class="w-full pb-2" (mouseout)="hideSuggestionContainer()" #suggestions></div>
                     </fieldset>
 
                     <mat-form-field class="w-full">
@@ -81,22 +80,6 @@
                         </mat-slider>
                     </div>
 
-                    <div class="flex flex-col">
-                        <label class="m-auto font-bold">User votes</label>
-                        <mat-slider min="0" [max]="maxUserVotes" discrete>
-                            <input matSliderStartThumb matInput formControlName="user_reviews_min">
-                            <input matSliderEndThumb matInput formControlName="user_reviews_max">
-                        </mat-slider>
-                    </div>
-
-                    <div class="flex flex-col">
-                        <label class="m-auto font-bold">Critic votes</label>
-                        <mat-slider min="0" [max]="maxCriticVotes" discrete>
-                            <input matSliderStartThumb matInput formControlName="critic_reviews_min">
-                            <input matSliderEndThumb matInput formControlName="critic_reviews_max">
-                        </mat-slider>
-                    </div>
-
                     <mat-form-field class="w-full">
                         <mat-label>Sort by</mat-label>
                         <mat-select [formControlName]="'sort_by'" class="w-full">
@@ -106,7 +89,7 @@
 
                     <mat-form-field class="w-full">
                         <mat-label>Sort direction</mat-label>
-                        <mat-select [formControlName]="'sort_dir'" [(value)]="sortDir" class="w-full">
+                        <mat-select [formControlName]="'sort_direction'" [(value)]="sortDir" class="w-full">
                             <mat-option *ngFor="let dir of sortDirections" [value]="dir">{{ dir }}</mat-option>
                         </mat-select>
                     </mat-form-field>
@@ -122,7 +105,7 @@
             </form>
         </div>
         <!-- Results section -->
-        <div class="bg-primary sticky">
+        <div class="bg-primary sticky w-full">
             <app-list [items]="items" [time]="time" [count]="count" [page]="page+1" [previousBtn]="previousBtn" [nextBtn]="nextBtn" (callPreviousPage)="previousPage()" (callNextPage)="nextPage()"></app-list>
         </div>
     </div>

@@ -70,7 +70,7 @@ class ElasticsearchPipeline:
                     }
                 }
             }
-            mapping = {
+            mappings = {
                 "properties": {
                     # "title": {"type": "text"},
                     "title_search": {
@@ -103,7 +103,7 @@ class ElasticsearchPipeline:
                     "rating": {"type": "text"}
                 }
             }
-            self.es.indices.create(index=self.index_name, body={"settings": settings, "mappings": mapping})
+            self.es.indices.create(index=self.index_name, settings=settings, mappings=mappings)
 
     def write_data(self, spider):
         spider.logger.debug("Writting data to file... "+ self.data_dir + "/"+  self.data_path)
@@ -146,7 +146,7 @@ class ElasticsearchPipeline:
                 self.print_progress(spider, max_items)
                 return None
             else: 
-                self.es.index(index=self.index_name, body=data)
+                self.es.index(index=self.index_name, document=data)
                 # Save the item in the items list if its name is not None
                 if item['title'] != None:
                     self.items.append(json.dumps(item, cls=MetacriticItemEncoder))
@@ -191,7 +191,7 @@ class ElasticsearchPipeline:
                             item_data = json.loads(item)
                             if not self.item_exists_by_attribute('title_keyword', item_data['title_keyword']):
                                 spider.logger.debug("Item does not exist in elasticsearch. Loading data...")
-                                self.es.index(index=self.index_name, body=item_data)
+                                self.es.index(index=self.index_name, document=item_data)
                         self.es.indices.refresh(index=self.index_name)
                     spider.logger.debug("Data loaded successfully! from partition: " + filename)
                 except Exception as e:

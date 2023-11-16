@@ -4,7 +4,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { AppComponent } from './app.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+//import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -18,13 +18,14 @@ import { RouterModule, Routes } from '@angular/router';
 import { SearchComponent } from './search/search.component';
 import { MatSliderModule } from '@angular/material/slider';
 import { GenreListResolver } from './search/resolvers/genre-list.resolver';
-import { MaxCriticVotesResolver } from './search/resolvers/max-critic-votes.resolver';
-import { MaxUserVotesResolver } from './search/resolvers/max-user-votes.resolver';
 import { HttpClientModule } from '@angular/common/http';
 import { ListComponent } from './list/list.component';
 import { PlatformListResolver } from './search/resolvers/platforms.resolver';
 import { VjsComponent } from './details/vjs/vjs.component';
 import { IpDataResolver } from './search/resolvers/ip-data.resolver';
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MomentDateAdapter } from '@angular/material-moment-adapter';
 
 const routes: Routes = [
     {
@@ -33,8 +34,6 @@ const routes: Routes = [
         resolve: {
             genres: GenreListResolver,
             platforms: PlatformListResolver,
-            maxCriticVotes: MaxCriticVotesResolver,
-            maxUserVotes: MaxUserVotesResolver,
             ipData: IpDataResolver
         },
         data: { title: "Search" }
@@ -45,6 +44,18 @@ const routes: Routes = [
         pathMatch: 'full',
     }
 ];
+
+export const MY_DATE_FORMAT = {
+    parse: {
+      dateInput: 'YYYY-MM-DD',
+    },
+    display: {
+      dateInput: 'DD/MM/YYYY',
+      monthYearLabel: 'MMM YYYY',
+      dateA11yLabel: 'LL',
+      monthYearA11yLabel: 'MMMM YYYY',
+    },
+};
 
 @NgModule({
     declarations: [
@@ -77,7 +88,10 @@ const routes: Routes = [
         DetailsComponent,
         ListComponent
     ],
-    providers: [],
+    providers: [
+        { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
+        { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMAT }
+    ],
     bootstrap: [AppComponent]
 })
 export class AppModule { }

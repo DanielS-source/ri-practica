@@ -50,9 +50,7 @@ export type GameItem = {
     summary: string;
     genre: string[];
     metascore: string;
-    critic_reviews: number;
     user_score: string;
-    user_reviews: number;
     release_date: string;
     companies: string[];
     images: string[];
@@ -81,13 +79,13 @@ export interface GameQuery {
     country?: string | null;
     metascore_min?: number | null;
     metascore_max?: number | null;
-    critic_reviews_min?: number | null;
-    critic_reviews_max?: number | null;
+    //critic_reviews_min?: number | null;
+    //critic_reviews_max?: number | null;
     metascore_asc?: boolean | null;
     user_score_min?: number | null;
     user_score_max?: number | null;
-    user_reviews_min?: number | null;
-    user_reviews_max?: number | null;
+    //user_reviews_min?: number | null;
+    //user_reviews_max?: number | null;
     user_score_asc?: boolean | null;
     start_date?: Date | string | null;
     end_date?: Date | string | null;

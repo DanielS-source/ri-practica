@@ -46,19 +46,18 @@ class MetacriticItem(BaseModel):
     genre: str | None = None
     platform: str | None = None
     country: str | None = None
-    metascore_min: int | None = None
-    metascore_max: int | None = None
-    critic_reviews_min: int | None = None
-    critic_reviews_max: int | None = None
-    metascore_asc: bool | None = None
+    critic_score_min: int | None = None
+    critic_score_max: int | None = None
+    #critic_reviews_min: int | None = None
+    #critic_reviews_max: int | None = None
     user_score_min: int | None = None
     user_score_max: int | None = None
-    user_reviews_min: int | None = None
-    user_reviews_max: int | None = None
-    user_score_asc: bool | None = None
+    #user_reviews_min: int | None = None
+    #user_reviews_max: int | None = None
     start_date: datetime.date | None = None
     end_date: datetime.date | None = None
-    date_asc: bool | None = None
+    sort_by: str | None = None
+    sort_direction: str | None = None
     page: int | None = 0
     size: int | None = PAGE_SIZE
 
@@ -144,9 +143,20 @@ def multisearch(
     if(item.title != None and len(item.title) > 0):
         query["query"]["bool"]["must"].append({"match": {"title_search": normalize_string(item.title)}})
         query["query"]["bool"]["should"].append({"wildcard": {"summary": "*"+normalize_string(item.title)+"*"}})
-            
-    if(item.title_asc != None):
-        sorts.append({"title_keyword": ("asc" if item.title_asc else "desc")})
+
+    # Sorting
+    
+    if (item.sort_by != None):
+        sorting = "asc" if item.sort_direction == "Ascending" else "desc"
+        if (item.sort_by == "title"):
+            sorts.append({"title_keyword": sorting})
+        if (item.sort_by == "critic_score"):
+            sorts.append({"metascore": sorting})
+        if (item.sort_by == "user_score"):
+            sorts.append({"user_score": sorting})
+        if (item.sort_by == "release_date"):
+            sorts.append({"release_date": sorting})
+
     if(item.genre != None):
         genres = item.genre.split(", ")
         for g in genres:
@@ -159,26 +169,15 @@ def multisearch(
     if(item.country != None):
         query["query"]["bool"]["should"].append({"match": {"countries": item.country}})
 
-    if(item.metascore_min != None):
-        if(item.metascore_max != None and int(item.metascore_max) >= int(item.metascore_min)):
+    if(item.critic_score_min != None):
+        if(item.critic_score_max != None and int(item.critic_score_max) >= int(item.critic_score_min)):
             query["query"]["bool"]["must"].append({"range": { "metascore": {
-                "gte": int(item.metascore_min),
-                "lte": int(item.metascore_max)
+                "gte": int(item.critic_score_min),
+                "lte": int(item.critic_score_max)
             }}})
         else:
-            query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(item.metascore_min) } } })
-
-    if(item.critic_reviews_min != None):
-        if(item.critic_reviews_max != None and int(item.critic_reviews_max) >= int(item.critic_reviews_min)):
-            query["query"]["bool"]["must"].append({"range": { "critic_reviews": {
-                "gte": int(item.critic_reviews_min),
-                "lte": int(item.critic_reviews_max)
-            }}})
-        else:
-            query["query"]["bool"]["must"].append({"range": { "critic_reviews": { "gte": int(item.critic_reviews_min) } } })
-
-    if(item.metascore_asc != None):
-        sorts.append({"metascore": ("asc" if item.metascore_asc else "desc")})
+            query["query"]["bool"]["must"].append({"range": { "metascore": { "gte": int(item.critic_score_min) } } })
+    
     if(item.user_score_min != None):
         if(item.user_score_max!= None and int(item.user_score_max) >= int(item.user_score_min)):
             query["query"]["bool"]["must"].append({"range": { "user_score": {
@@ -188,32 +187,27 @@ def multisearch(
         else:
             query["query"]["bool"]["must"].append({"range": { "user_score": { "gte": int(item.user_score_min) } } })
 
-    if(item.user_reviews_min != None):
-        if(item.user_reviews_max!= None and int(item.user_reviews_max) >= int(item.user_reviews_min)):
-            query["query"]["bool"]["must"].append({"range": { "user_reviews": {
-                "gte": int(item.user_reviews_min),
-                "lte": int(item.user_reviews_max)
-            }}})
-        else:
-            query["query"]["bool"]["must"].append({"range": { "user_reviews": { "gte": int(item.user_reviews_min) } } })
-    
-    if(item.user_score_asc!= None):
-        sorts.append({"user_score": ("asc" if item.user_score_asc else "desc")})
-
     if(item.start_date!= None):
-        if(item.end_date != None and item.start_date <= item.end_date):
-            query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
-            query["query"]["bool"]["should"].append({"range": { "release_date": {
-                "gte": item.start_date.strftime("%Y-%m-%d"),
-                "lte": item.end_date.strftime("%Y-%m-%d")
-            }}})
+        d_start = item.start_date.strftime("%Y-%m-%d")
+        if (item.end_date!= None):
+            d_end = item.end_date.strftime("%Y-%m-%d")
+
+            if(d_start == d_end):
+                query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
+                query["query"]["bool"]["must"].append({"match": { "release_date": item.start_date.strftime("%Y-%m-%d")}})
+
+            elif(item.end_date != None and d_start <= d_end):
+                query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
+                query["query"]["bool"]["must"].append({"range": { "release_date": {
+                    "gte": item.start_date.strftime("%Y-%m-%d"),
+                    "lte": item.end_date.strftime("%Y-%m-%d")
+                }}})
         else:
             query["query"]["bool"]["should"].append({"bool": {"must_not": {"exists": {"field": "release_date"}}}})
-            query["query"]["bool"]["should"].append({"range": { "release_date": {
+            query["query"]["bool"]["must"].append({"range": { "release_date": {
                 "gte": item.start_date.strftime("%Y-%m-%d")
             }}})
-    if(item.date_asc!= None):
-        sorts.append({"release_date": ("asc" if item.date_asc else "desc")})
+
 
     query["sort"] = sorts
     if(query["query"] == {}):
@@ -313,7 +307,7 @@ def get_countries():
 
 @app.post(ROOT_PATH + "/suggestions")
 def get_suggestions(
-    title: str = Body(..., description="Title", example="Pokém", embed=True),
+    title: str = Body(..., description="Title", examples=["Pokém"], embed=True),
 ):
     alternatives = False
     if title and len(title) > 0:
@@ -387,7 +381,7 @@ def get_suggestions(
     
 @app.get(ROOT_PATH + "/title")
 def search_by_title(
-    title: str = Query(None, description="Title or description", example="Pokémon"),
+    title: str = Query(None, description="Title or description", examples=["Pokémon"]),
 ):
     if title:
         query = {
@@ -421,11 +415,11 @@ def search_by_genre(
     else:
         return {"detail":"Not Found"}
 
-@app.get(ROOT_PATH + "/metascore")
+@app.get(ROOT_PATH + "/critic-score")
 def search_by_metascore(
-    metascore: int = Query(None, description="Metascore", ),
+    critic_score: int = Query(None, description="Critic score", ),
 ):
-    if metascore:
+    if critic_score:
         query = {
             "query": {
                 "range": {
@@ -433,7 +427,7 @@ def search_by_metascore(
                 }
             }
         }
-        query["query"]["range"]["metascore"] = {"gte": metascore}
+        query["query"]["range"]["metascore"] = {"gte": critic_score}
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
@@ -468,7 +462,7 @@ def search_by_date_range(
             }
         }
     }
-    query["query"]["range"]["release_date"] = {"gte": start_date}
+    query["query"]["range"]["release_date"] = {"gte": start_date.strftime("%Y-%m-%d")}
     
     if end_date is not None:
         query["query"]["range"]["release_date"]["lte"] = end_date.strftime("%Y-%m-%d")

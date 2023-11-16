@@ -10,7 +10,7 @@
                 <div
                     class="z-0 relative mx-4 mt-4 overflow-hidden rounded-xl bg-gray-500 bg-clip-border shadow-lg shadow-gray-500/40">
                     <div class="h-[330px] flex items-center justify-center bg-primary">
-                        <img src="{{item.images[0]}}" onerror="this.src='assets/not_found.jpg'" alt="ui/ux review check" class="object-cover" />
+                        <img src="{{item.images[0]}}" onerror="this.src='assets/not_found.jpg'" alt="Videogame cover" class="object-cover" />
                     </div>
                     <div
                         class="to-bg-black-10 absolute inset-0 h-full w-full bg-gradient-to-tr from-transparent via-transparent to-black/60">
@@ -23,13 +23,23 @@
                         class="bg-indigo-100 text-indigo-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-indigo-900 dark:text-indigo-300 whitespace-nowrap">Must
                         Play!</span>
                 </div>
+                <div [ngSwitch]="item.rating" class="w-full">
+                    <img *ngSwitchCase="'AO'" src="assets/ratings/AO.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'E'" src="assets/ratings/E.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'E10+'" src="assets/ratings/E10+.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'EC'" src="assets/ratings/EC.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'M'" src="assets/ratings/M.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'RP'" src="assets/ratings/RP.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchCase="'T'" src="assets/ratings/T.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                    <img *ngSwitchDefault src="assets/ratings/RP.svg" alt="Rating" class="object-cover w-8 ml-auto relative bottom-12 right-7" />
+                </div>
                 <div class="p-6 h-[350px] flex flex-col justify-between">
                     <div class="mb-3 flex flex-col items-center justify-between">
                         <h5
                             class="block font-sans text-xl mb-2 font-medium leading-snug tracking-normal text-blue-gray-900 antialiased">
                             {{item.title}}
                         </h5>
-                        <p
+                        <p *ngIf="item.critic_reviews"
                             class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
                             Critics ({{item.critic_reviews}}):
                             <mat-icon *ngIf="item.metascore > 70" color="primary">star</mat-icon>
@@ -38,7 +48,11 @@
                             <mat-icon *ngIf="item.metascore <= 40" color="primary">star_outline</mat-icon>
                             {{item.metascore}}/100
                         </p>
-                        <p
+                        <p *ngIf="!item.critic_reviews"
+                        class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
+                            No critic ratings for this game
+                        </p>
+                        <p *ngIf="item.user_reviews"
                             class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
                             Users ({{item.user_reviews}}):
                             <mat-icon *ngIf="item.user_score > 7" color="primary">star</mat-icon>
@@ -47,20 +61,36 @@
                             <mat-icon *ngIf="item.user_score <= 4" color="primary">star_outline</mat-icon>
                             {{item.user_score}}/10
                         </p>
+                        <p *ngIf="!item.user_reviews"
+                        class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
+                            No user ratings for this game
+                        </p>
 
-                        <p
+                        <p  *ngIf="item.release_date"
                             class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
                             Release date : {{item.release_date}}
                         </p>
 
-                        <div>
+                        <p  *ngIf="!item.release_date"
+                            class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
+                            No release date available
+                        </p>
+
+                        <div *ngIf="item.sentiment">
                             <p
                                 class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
-                                Public perception :
+                                Public perception
                             </p>
                             <p
                                 class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
                                 <strong>{{item.sentiment}}</strong>
+                            </p>
+                        </div>
+
+                        <div *ngIf="!item.sentiment">
+                            <p
+                                class="flex items-center gap-1.5 font-sans text-base font-normal leading-relaxed text-blue-gray-900 antialiased">
+                                No public perception
                             </p>
                         </div>
 

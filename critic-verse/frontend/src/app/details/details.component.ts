@@ -1,8 +1,23 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
 
 @Component({
     selector: 'app-details',
-    templateUrl: './details.component.html'
+    templateUrl: './details.component.html',
+    animations: [
+        trigger(
+          'showAnimation', [
+            transition(':enter', [
+              style({opacity: 0}),
+              animate('1000ms ease', style({opacity: 1}))
+            ]),
+            transition(':leave', [
+              style({opacity: 1}),
+              animate('10ms ease-out', style({opacity: 0}))
+            ])
+          ]
+        )
+    ]
 })
 export class DetailsComponent {
     videoSource: string = '';

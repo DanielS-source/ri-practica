@@ -5,10 +5,25 @@ import { Subject, takeUntil } from 'rxjs';
 import { SearchService } from './search.service';
 import { GameItem, GameQuery, IPData, SuggestionQuery } from './search.model';
 import * as moment from 'moment';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'app-search',
-    templateUrl: './search.component.html'
+    templateUrl: './search.component.html',
+    animations: [
+        trigger(
+          'showAnimation', [
+            transition(':enter', [
+              style({opacity: 0}),
+              animate('1000ms ease', style({opacity: 1}))
+            ]),
+            transition(':leave', [
+              style({opacity: 1}),
+              animate('500ms ease-out', style({opacity: 0}))
+            ])
+          ]
+        )
+    ]
 })
 export class SearchComponent implements OnInit, OnDestroy {
     form: FormGroup;

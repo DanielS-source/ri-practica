@@ -13,6 +13,17 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "global/document",
+              "@videojs/xhr",
+              "keycode",
+              "mux.js/lib/tools/parse-sidx",
+              "mux.js/lib/utils/clock",
+              "safe-json-parse/tuple",
+              "videojs-vtt.js",
+              "moment",
+              "global/window"
+            ],
             "outputPath": "dist/critic-verse",
             "index": "src/index.html",
             "main": "src/main.ts",

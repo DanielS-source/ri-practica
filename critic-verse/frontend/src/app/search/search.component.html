@@ -14,10 +14,10 @@
                             (focus)="showSuggestionContainer()"
                             formControlName="title">
                     </mat-form-field>
-                    <fieldset *ngIf="suggestionContainer" class="w-[18.4vw] absolute z-10 bg-[#e5e7eb] pt-5 mt-[-2.3vh] text-center pb-2" style="border-radius: 0px 0px 15px 15px" id="suggestions">
+                    <fieldset *ngIf="suggestionContainer" [@showAnimation] class="w-[18.4vw] mb-4 absolute z-[100] bg-[#e5e7eb] pt-5 mt-[-2.3vh] text-center pb-2" style="border-radius: 0px 0px 15px 15px" id="suggestions">
                         <legend *ngIf="!showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Suggestions</legend>
                         <legend *ngIf="showAlternatives" class="text-xs absolute left-2 mt-[-2vh] text-[#c2185b]">Alternatives</legend>
-                        <div class="w-full pb-2" (mouseout)="hideSuggestionContainer()" #suggestions></div>
+                        <div class="w-full pb-2" (mouseleave)="hideSuggestionContainer()" #suggestions></div>
                     </fieldset>
 
                     <mat-form-field class="w-full">
@@ -102,6 +102,7 @@
                         Search
                     </button>
                 </div>
+                <footer class="text-sm text-[#c2185b] font-bold">CRITIC-VERSE &copy; 2023 by <br /> Daniel Vicente Ramos & Daniel Silva Iglesias</footer>
             </form>
         </div>
         <!-- Results section -->

@@ -260,7 +260,7 @@ def get_genres():
         "size": 0,
         "aggs": {}
     }  
-    query["aggs"] = {"unique_genres": {"terms": {"field": 'genre', "order": { "_key": "asc" }}}}
+    query["aggs"] = {"unique_genres": {"terms": {"field": 'genre', "order": { "_key": "asc" }, "size": 200}}}
         
     response = es.search(index=INDEX, body=query)
 
@@ -277,7 +277,7 @@ def get_platforms():
         "size": 0,
         "aggs": {}
     }  
-    query["aggs"] = {"unique_platforms": {"terms": {"field": 'platforms', "order": { "_key": "asc" }}}}
+    query["aggs"] = {"unique_platforms": {"terms": {"field": 'platforms', "order": { "_key": "asc" }, "size": 50}}}
         
     response = es.search(index=INDEX, body=query)
 
@@ -294,7 +294,7 @@ def get_countries():
         "size": 0,
         "aggs": {}
     }  
-    query["aggs"] = {"unique_countries": {"terms": {"field": 'countries'}}}
+    query["aggs"] = {"unique_countries": {"terms": {"field": 'countries', "size": 50}}}
         
     response = es.search(index=INDEX, body=query)
 

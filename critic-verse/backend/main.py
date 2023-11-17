@@ -22,10 +22,13 @@ ROOT_PATH = os.getenv("ROOT_PATH", default="/api/v1")
 PAGE_SIZE = int(os.getenv("PAGE_SIZE", default=12))
 MAX_SUGGESTIONS = int(os.getenv("MAX_SUGGESTIONS", default=8))
 MAX_ALTERNATIVES = int(os.getenv("MAX_ALTERNATIVES", default=8))
+MAX_RELEVANCE_DOCS = int(os.getenv("MAX_RELEVANCE_DOCS", default=100))
 
 INDEX = os.getenv("INDEX", default="metacritic")
 
 es = Elasticsearch([{'scheme': ELASTIC_SCHEME, 'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
+
+relevant_docs = []
 
 app = FastAPI()
 origins = ["*"]
@@ -131,12 +134,22 @@ def multisearch(
     query = {
         "size": int(item.size),
         "from": int(item.page*item.size),
-        "query": {"bool": {"must": [], "should": []}},  
+        "query": {
+            "bool": {
+                "must": [], 
+                "should": []
+            }
+        },  
         "sort": [],
         "collapse": {
             "field": "title_keyword"  # Don't show duplicated hits with this field
         }
     }
+    
+    # Relevance feedback
+    if (len(relevant_docs) > 0):
+        query["query"]["bool"]["should"].append({"more_like_this": {"fields": ["title_search"], "like": relevant_docs, "min_term_freq": 1, "min_doc_freq": 1}})
+
     range = 0
     if(item.size < PAGE_SIZE):
         query["size"] = PAGE_SIZE
@@ -305,6 +318,23 @@ def get_countries():
         return country_list
     return country_list
 
+# Relevance feedback
+
+@app.post(ROOT_PATH + "/relevance/add")
+def add_relevance(title: str = Body(..., description="Title", examples=["mario kart ds"], embed=True)):
+    if title and len(title) > 0 and title not in relevant_docs:
+        if(len(relevant_docs >= MAX_RELEVANCE_DOCS)):
+            relevant_docs.pop(0)                        # Delete first doc
+        relevant_docs.append(title)
+    return {}
+
+@app.post(ROOT_PATH + "/relevance/delete")
+def delete_relevance(title: str = Body(..., description="Title", examples=["mario kart ds"], embed=True)):
+    if title and len(title) > 0 and title in relevant_docs:
+        relevant_docs.remove(title)
+    return {}
+
+
 @app.post(ROOT_PATH + "/suggestions")
 def get_suggestions(
     title: str = Body(..., description="Title", examples=["Pokém"], embed=True),
@@ -368,6 +398,11 @@ def get_suggestions(
                 "field": "title_keyword"                # Don't show duplicated hits with this field
             }
         }
+
+        # Relevance feedback
+        if (len(relevant_docs) > 0):
+            alternatives_query["query"]["bool"]["should"].append({"more_like_this": {"fields": ["title_search"], "like": relevant_docs, "min_term_freq": 1, "min_doc_freq": 1}})
+
         response = es.search(index=INDEX, body=query)
 
         # If no suggestions then load alternatives

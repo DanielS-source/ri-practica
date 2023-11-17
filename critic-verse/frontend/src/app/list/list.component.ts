@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
+import { SearchService } from '../search/search.service';
 
 @Component({
     selector: 'app-list',
@@ -18,6 +19,10 @@ export class ListComponent {
 
     selectedItem: any;
 
+    constructor(private _searchService: SearchService) {
+
+    }
+
     @Output() callPreviousPage: EventEmitter<void> = new EventEmitter<void>();
     @Output() callNextPage: EventEmitter<void> = new EventEmitter<void>();
 
@@ -29,7 +34,10 @@ export class ListComponent {
         this.callNextPage.emit();
     }
 
-    setItem(item: any): void {
+    setItem(item: any) {
+        // Set document as relevant
+        this._searchService.addRelevance(item.title_search).subscribe((resolve: any) => {});
+
         this.selectedItem = item;
         this.sidenav.open();
     }

@@ -32,6 +32,14 @@ export class SearchService {
             );
     }
 
+    addRelevance(doc_title: string): Observable<any> {
+        return this._httpClient.post<any>(`${environment.api}/relevance/add`, {"title": doc_title}, this.httpOptions);
+    }
+
+    deleteRelevance(doc_title: string) {
+        this._httpClient.post<any>(`${environment.api}/relevance/delete`,  {"title": doc_title}, this.httpOptions);
+    }
+
     getSuggestions(query: SuggestionQuery): Observable<any> {
         return this._httpClient.post<any>(`${environment.api}/suggestions`, query, this.httpOptions);
     }

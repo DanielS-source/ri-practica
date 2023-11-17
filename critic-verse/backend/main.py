@@ -323,7 +323,7 @@ def get_countries():
 @app.post(ROOT_PATH + "/relevance/add")
 def add_relevance(title: str = Body(..., description="Title", examples=["mario kart ds"], embed=True)):
     if title and len(title) > 0 and title not in relevant_docs:
-        if(len(relevant_docs >= MAX_RELEVANCE_DOCS)):
+        if(len(relevant_docs) >= MAX_RELEVANCE_DOCS):
             relevant_docs.pop(0)                        # Delete first doc
         relevant_docs.append(title)
     return {}

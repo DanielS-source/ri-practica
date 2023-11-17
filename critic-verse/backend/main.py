@@ -379,9 +379,9 @@ def get_suggestions(
     else:
         return parse_data_suggestions(title, {}, alternatives)
     
-@app.get(ROOT_PATH + "/title")
+@app.get(ROOT_PATH + "/title/search")
 def search_by_title(
-    title: str = Query(None, description="Title or description", examples=["Pokémon"]),
+    title: str = Query(None, description="Title or description"),
 ):
     if title:
         query = {
@@ -399,25 +399,25 @@ def search_by_title(
     else:
         return {"detail":"Not Found"}
         
-@app.get(ROOT_PATH + "/genres")
+@app.get(ROOT_PATH + "/genres/search")
 def search_by_genre(
-    q: str = Query(None, description="Genre", ),
+    genre: str = Query(None, description="Genre"),
 ):
-    if q:
+    if genre:
         query = {
             "query": {
                 "match": {}
             }
         }
-        query["query"]["match"]["genre"] = {"genre": q}
+        query["query"]["match"]["genre"] = {"genre": genre}
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
 
-@app.get(ROOT_PATH + "/critic-score")
+@app.get(ROOT_PATH + "/critic-score/search")
 def search_by_metascore(
-    critic_score: int = Query(None, description="Critic score", ),
+    critic_score: int = Query(None, description="Search for games with critic score less than equal your value."),
 ):
     if critic_score:
         query = {
@@ -427,29 +427,32 @@ def search_by_metascore(
                 }
             }
         }
-        query["query"]["range"]["metascore"] = {"gte": critic_score}
+        query["query"]["range"]["metascore"] = {"lte": critic_score}
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
         
-@app.get(ROOT_PATH + "/user_score")
+@app.get(ROOT_PATH + "/user_score/search")
 def search_by_user_score(
-    q: str = Query(None, description="User score", ),
+    user_score: str = Query(None, description="Search for games with user score less than equal your value."),
 ):
-    if q:
+    if user_score:
         query = {
-            "query": {},
-            "sort": []
+            "query": {
+                "range": {
+                    "user_score": {}
+                }
+            }
         }
-        query["query"] = {"match_all": {}}
+        query["query"]["range"]["user_score"] = {"lte": user_score}
         query["sort"].append({"user_score":"desc"})
         response = es.search(index=INDEX, body=query)
         return parse_data(response, 0, PAGE_SIZE)
     else:
         return {"detail":"Not Found"}
     
-@app.get(ROOT_PATH + "/date_range")
+@app.get(ROOT_PATH + "/date_range/search")
 def search_by_date_range(   
     start_date: datetime.date = datetime.date.today(),
     end_date: datetime.date = None
